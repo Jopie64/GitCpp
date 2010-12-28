@@ -200,6 +200,10 @@
 				Name="JStd"
 				>
 				<File
+					RelativePath=".\jstd\DirIterator.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\jstd\JStd.cpp"
 					>
 				</File>
@@ -221,6 +225,10 @@
 			<Filter
 				Name="JStd"
 				>
+				<File
+					RelativePath=".\jstd\DirIterator.h"
+					>
+				</File>
 				<File
 					RelativePath=".\jstd\JStd.h"
 					>

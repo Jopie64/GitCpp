@@ -8,6 +8,7 @@
 #include <map>
 #include <windows.h>
 #include <iostream>
+#include "jstd\DirIterator.h"
 
 namespace Git
 {
@@ -83,6 +84,31 @@ public:
 		}
 	}
 
+	void	LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL)
+	{
+		if(subPath == NULL)
+			subPath = L"refs";
+		for(JStd::CDirIterator refDir((m_Path + L"/" + subPath + L"/*").c_str()); refDir; ++refDir)
+		{
+			std::wstring refPart = wstring(subPath) + L"/" + refDir.File().name;
+			if(refDir.IsDirectory())
+			{
+				if (wcscmp(refDir.File().name, L".") == 0 || 
+					wcscmp(refDir.File().name, L"..") == 0)
+					continue;
+				LoadFileRefs(refMap, refPart.c_str());
+				continue;
+			}
+			refMap[JStd::String::ToMult(refPart.c_str(), CP_UTF8)] = GetRef(refPart.c_str());
+		}
+	}
+
+	void	LoadRefs(MapRef& refMap)
+	{
+		LoadPackedRefs(refMap);
+		LoadFileRefs(refMap);
+	}
+
 	void	EnsureNotSymbolic(CRef& ref)
 	{
 		while(ref.IsSymbolic())
@@ -120,6 +146,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	repoTest.EnsureNotSymbolic(ref);
 
 	cout << ref.m_Hash << endl;
+
+	Git::MapRef refs;
+	repoTest.LoadRefs(refs);
+
+	for(Git::MapRef::iterator i = refs.begin(); i != refs.end(); ++i)
+	{
+		cout << i->first << " " << i->second.m_Hash << endl;
+	}
 
 
 
