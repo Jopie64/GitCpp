@@ -25,6 +25,22 @@ bool IsGitDir(const wchar_t* path)
 class CRef
 {
 public:
+	CRef(){}
+	CRef(const char* refHash){Set(refHash);}
+	CRef(const std::string& refHash){Set(refHash);}
+
+	void Set(const char* refHash)
+	{
+		m_Hash = refHash;
+		JStd::String::TrimRight(m_Hash, "\r\n\t ");
+	}
+	void Set(const std::string& refHash){Set(refHash.c_str());}
+
+	bool IsSymbolic() const
+	{
+		return strncmp(m_Hash.c_str(), "ref: ", 5) == 0;
+	}
+
 	std::string m_Hash;
 };
 
@@ -39,9 +55,9 @@ public:
 		ifstream file((m_Path + L"\\" + refName).c_str());
 		if(file)
 		{
-			CRef refReturn;
-			getline(file, refReturn.m_Hash);
-			return refReturn;
+			std::string refReturn;
+			getline(file, refReturn);
+			return CRef(refReturn);
 		}
 
 		string multRefName = JStd::String::ToMult(refName, CP_UTF8);
@@ -56,14 +72,21 @@ public:
 	void	LoadPackedRefs(MapRef& refMap)
 	{
 		ifstream file((m_Path + L"\\packed-refs").c_str());
-		CRef ref;
-		std::string refName;
-		while(getline(file, ref.m_Hash, ' '))
+		string ref;
+		string refName;
+		while(getline(file, ref, ' '))
 		{
 			if(!getline(file, refName))
 				break; //Should not occur. When it does, just ignore
+			JStd::String::TrimRight(refName, "\r\n");
 			refMap[refName] = ref;
 		}
+	}
+
+	void	EnsureNotSymbolic(CRef& ref)
+	{
+		while(ref.IsSymbolic())
+			ref = GetRef(JStd::String::ToWide(ref.m_Hash.substr(5), CP_UTF8).c_str());
 	}
 
 
@@ -91,9 +114,14 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	Git::CRepo repoTest(L"d:\\develop\\tortoisegit2");
 
-	Git::CRef ref = repoTest.GetRef(L"HEAD");
+//	Git::CRef ref = repoTest.GetRef(L"HEAD");
+	Git::CRef ref = repoTest.GetRef(L"refs/heads/test");
+
+	repoTest.EnsureNotSymbolic(ref);
 
 	cout << ref.m_Hash << endl;
+
+
 
 
 	char c;
