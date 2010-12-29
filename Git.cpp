@@ -7,6 +7,7 @@
 #include "jstd\DirIterator.h"
 #include <vector>
 #include <algorithm>
+#include "zlib\zlib.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -166,6 +167,16 @@ struct idxFileHeader
 typedef vector<JStd::CSha1Hash> vectorSha1;
 
 
+struct packFileHeader
+{
+	char	pack[4];
+	int		version;
+	int		entries;
+	char	something;
+
+};
+
+
 
 bool CRepo::Open(CObject& obj,const wchar_t* basePath)
 {
@@ -221,6 +232,49 @@ bool CRepo::Open(CObject& obj,const wchar_t* basePath)
 			continue;
 
 		offsetPack = ntohl(offsetPack);
+
+		//Read packfile
+
+		wstring packFileName = iIdx.File().name;
+		size_t dot = packFileName.find('.');
+		if(dot == string::npos)
+			throw std::logic_error("Invalid index filename");
+
+		ifstream fPack((objectPath + L"\\pack\\" + packFileName.substr(0, dot) + L".pack").c_str(), ios::in | ios::binary);
+
+		packFileHeader packHdr;
+		fPack.read((char*)&packHdr, sizeof(packHdr));
+
+		if(fPack.gcount() != sizeof(packHdr))
+			throw std::logic_error("Invalid packfile format");
+
+		if(strncmp(packHdr.pack, "PACK", 4) != 0)
+			throw std::logic_error("Invalid packfile format (2)");
+
+		fPack.seekg(offsetPack);
+
+		char objHdrPart;
+		int objSize = 0;
+		fPack.read(&objHdrPart, 1);
+
+		char objType = (objHdrPart & 0x70) >> 4;
+		objSize = objHdrPart & 0x0f;
+
+		char shiftCount = 4;
+		while(objHdrPart < 0)
+		{
+			fPack.read(&objHdrPart, 1);
+			if(fPack.gcount() != 1)
+				throw std::logic_error("Invalid packfile format (3)");
+
+			objSize |= (objHdrPart & 0x7f) << shiftCount;
+
+			shiftCount += 7;
+		}
+
+
+
+
 
 
 //		cout <<  iIdx.File().name << endl;
