@@ -198,16 +198,31 @@ bool CRepo::Open(CObject& obj,const wchar_t* basePath)
 			continue; //invalid idx file or old version?
 
 		vectorSha1 sha1s(ntohl(hdr.fanout[255]));
-		size_t readSize = sizeof(JStd::CSha1Hash) * sha1s.size();
-		fIdx.read((char*)&*sha1s.begin(), readSize);
-		if(fIdx.gcount() != readSize)
+		size_t sizeSha1s = sizeof(JStd::CSha1Hash) * sha1s.size();
+		fIdx.read((char*)&*sha1s.begin(), sizeSha1s);
+		if(fIdx.gcount() != sizeSha1s)
 			continue;
 		
 		vectorSha1::iterator iSha1 = lower_bound(sha1s.begin(), sha1s.end(), obj.GetHash());
-		if(iSha1 != sha1s.end() && *iSha1 == obj.GetHash())
-		{
-			return true;
-		}
+		if(iSha1 == sha1s.end() || *iSha1 != obj.GetHash())
+			continue;
+
+		size_t ixSha1 = iSha1 - sha1s.begin();
+
+		size_t placeOffsetsStart = 
+			sizeof(hdr) +		//Header
+			sizeSha1s +			//Sha1's
+			sha1s.size() * 4;	//CRC's
+
+		unsigned int offsetPack;
+		fIdx.seekg(placeOffsetsStart + ixSha1 * 4);
+		fIdx.read((char*)&offsetPack, sizeof(offsetPack));
+		if(fIdx.gcount() != sizeof(offsetPack))
+			continue;
+
+		offsetPack = ntohl(offsetPack);
+
+
 //		cout <<  iIdx.File().name << endl;
 //		for(vectorSha1::iterator i=sha1s.begin(); i!= sha1s.end(); ++i)
 //			cout << i->AsString() << endl;
