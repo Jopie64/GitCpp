@@ -64,6 +64,22 @@ std::ostream& operator<<(std::ostream& str, const CRef& ref)
 
 
 
+CObject::CObject()
+{
+}
+
+CObject::CObject(const char* refHash)
+:	m_Hash(refHash)
+{
+}
+
+CObject::CObject(const std::string& refHash)
+:	m_Hash(refHash)
+{
+}
+
+
+
 CRepo::CRepo(const wchar_t* path)
 :	m_Path(path)
 {
@@ -91,7 +107,7 @@ CRef CRepo::GetRef(const wchar_t* refName)
 	CRef refReturn = refMap[multRefName];
 	if(!refReturn.IsValid())
 		throw std::runtime_error(JStd::String::Format("Ref \'%s\' not found.",multRefName.c_str()));
-	return refReturn;		
+	return refReturn;
 }
 
 void CRepo::LoadPackedRefs(MapRef& refMap)
@@ -137,6 +153,37 @@ void CRepo::EnsureNotSymbolic(CRef& ref)
 {
 	while(ref.IsSymbolic())
 		ref = GetRef(JStd::String::ToWide(ref.Hash().substr(5), CP_UTF8).c_str());
+}
+
+struct idxFileHeader
+{
+	int version1;
+	int version2;
+
+	int fanout[255];
+	int size;
+};
+
+void CRepo::Open(CObject& obj)
+{
+	wstring path = m_Path + L"/objects/" + JStd::String::ToWide(obj.m_Hash.substr(0, 2), CP_UTF8) + L"/" + JStd::String::ToWide(obj.m_Hash.substr(2), CP_UTF8);
+	ifstream data;
+	data.open(path.c_str(), ios::in | ios::binary);
+	if(data)
+	{
+		cout << "Yeah, opened!" << endl;
+		return;
+	}
+
+	for(JStd::CDirIterator iIdx((m_Path + L"\\objects\\pack\\*.idx").c_str()); iIdx; ++iIdx)
+	{
+		ifstream fIdx((m_Path + L"\\objects\\pack\\" + iIdx.File().name).c_str(), ios::in | ios::binary);
+		idxFileHeader hdr;
+		fIdx.read((char*)&hdr, sizeof(hdr));
+		if(fIdx.gcount() != sizeof(hdr))
+			continue; //invalid idx file or old version?
+		
+	}
 }
 
 

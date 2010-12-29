@@ -32,6 +32,18 @@ typedef std::map<std::string, CRef> MapRef;
 
 std::ostream& operator<<(std::ostream& str, const CRef& ref);
 
+class CObject
+{
+public:
+	CObject();
+	CObject(const char* refHash);
+	CObject(const std::string& refHash);
+
+
+
+	std::string m_Hash;
+};
+
 class CRepo
 {
 public:
@@ -42,6 +54,7 @@ public:
 	void	LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL);
 	void	LoadRefs(MapRef& refMap);
 	void	EnsureNotSymbolic(CRef& ref);
+	void	Open(CObject& obj);
 
 private:
 

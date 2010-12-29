@@ -29,6 +29,9 @@ int _tmain(int argc, _TCHAR* argv[])
 		cout << i->first << " " << i->second << endl;
 	}
 
+	Git::CObject obj(ref.Hash());
+	repoTest.Open(obj);
+
 
 
 
