@@ -31,7 +31,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		cout << i->first << " " << i->second << endl;
 	}
 
-	Git::CObject obj(ref.Hash());
+	Git::CObject obj(JStd::CSHA1::FromString(ref.Hash().c_str()));
 	repoTest.Open(obj);
 
 

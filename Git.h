@@ -2,6 +2,7 @@
 #include <map>
 #include <string>
 #include <iostream>
+#include "jstd/Sha1.h"
 
 namespace Git
 {
@@ -36,12 +37,13 @@ class CObject
 {
 public:
 	CObject();
-	CObject(const char* refHash);
-	CObject(const std::string& refHash);
+	CObject(const JStd::CSha1Hash& hash);
+
+	JStd::CSha1Hash GetHash()const{return m_Hash;}
 
 
 
-	std::string m_Hash;
+	JStd::CSha1Hash m_Hash;
 };
 
 class CRepo

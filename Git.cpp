@@ -1,9 +1,14 @@
 #include "stdafx.h"
 #include "Git.h"
 #include "jstd\JStd.h"
+#include "jstd\Sha1.h"
 #include <fstream>
 #include <windows.h>
 #include "jstd\DirIterator.h"
+#include <vector>
+#include <algorithm>
+
+#pragma comment(lib, "Ws2_32.lib")
 
 namespace Git
 {
@@ -68,13 +73,8 @@ CObject::CObject()
 {
 }
 
-CObject::CObject(const char* refHash)
-:	m_Hash(refHash)
-{
-}
-
-CObject::CObject(const std::string& refHash)
-:	m_Hash(refHash)
+CObject::CObject(const JStd::CSha1Hash& hash)
+:	m_Hash(hash)
 {
 }
 
@@ -163,6 +163,10 @@ struct idxFileHeader
 	int fanout[256];
 };
 
+typedef vector<JStd::CSha1Hash> vectorSha1;
+
+
+
 bool CRepo::Open(CObject& obj,const wchar_t* basePath)
 {
 	wstring objectPath;
@@ -171,8 +175,10 @@ bool CRepo::Open(CObject& obj,const wchar_t* basePath)
 	else
 		objectPath = basePath;
 
+	std::string hashStr = obj.GetHash().AsString();
+
 	ifstream data(
-		(objectPath + L"/" + JStd::String::ToWide(obj.m_Hash.substr(0, 2), CP_UTF8) + L"/" + JStd::String::ToWide(obj.m_Hash.substr(2), CP_UTF8)).c_str(), 
+		(objectPath + L"/" + JStd::String::ToWide(hashStr.substr(0, 2), CP_UTF8) + L"/" + JStd::String::ToWide(hashStr.substr(2), CP_UTF8)).c_str(), 
 		ios::in | ios::binary);
 	if(data)
 	{
@@ -191,6 +197,22 @@ bool CRepo::Open(CObject& obj,const wchar_t* basePath)
 		if(fIdx.gcount() != sizeof(hdr))
 			continue; //invalid idx file or old version?
 
+		vectorSha1 sha1s(ntohl(hdr.fanout[255]));
+		size_t readSize = sizeof(JStd::CSha1Hash) * sha1s.size();
+		fIdx.read((char*)&*sha1s.begin(), readSize);
+		if(fIdx.gcount() != readSize)
+			continue;
+		
+		vectorSha1::iterator iSha1 = lower_bound(sha1s.begin(), sha1s.end(), obj.GetHash());
+		if(iSha1 != sha1s.end() && *iSha1 == obj.GetHash())
+		{
+			return true;
+		}
+//		cout <<  iIdx.File().name << endl;
+//		for(vectorSha1::iterator i=sha1s.begin(); i!= sha1s.end(); ++i)
+//			cout << i->AsString() << endl;
+
+//		cout << endl;
 	}
 
 	ifstream alternates((objectPath + L"\\info\\alternates").c_str());
