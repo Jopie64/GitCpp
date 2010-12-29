@@ -211,6 +211,10 @@
 					RelativePath=".\jstd\JStd.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\jstd\Sha1.cpp"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -239,6 +243,10 @@
 				</File>
 				<File
 					RelativePath=".\jstd\JStd.h"
+					>
+				</File>
+				<File
+					RelativePath=".\jstd\Sha1.h"
 					>
 				</File>
 				<File

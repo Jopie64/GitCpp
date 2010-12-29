@@ -7,6 +7,8 @@
 #include <iostream>
 #include "Git.h"
 
+#include "jstd\Sha1.h"
+
 using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -31,6 +33,17 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	Git::CObject obj(ref.Hash());
 	repoTest.Open(obj);
+
+
+	JStd::CSha1Hash hash = JStd::CSHA1::GenerateHash("testje");
+
+	cout 
+		<< hash.AsString() << endl
+		<< hash.AsString(JStd::CSha1Hash::REPORT_HEX_DASHED) << endl
+		<< JStd::CSHA1::FromString(hash.AsString(JStd::CSha1Hash::REPORT_HEX_DASHED).c_str()).AsString() << endl
+		<< JStd::CSHA1::FromString(hash.AsString().c_str()).AsString() << endl;
+
+
 
 
 

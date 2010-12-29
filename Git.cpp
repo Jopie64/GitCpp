@@ -160,30 +160,49 @@ struct idxFileHeader
 	int version1;
 	int version2;
 
-	int fanout[255];
-	int size;
+	int fanout[256];
 };
 
-void CRepo::Open(CObject& obj)
+bool CRepo::Open(CObject& obj,const wchar_t* basePath)
 {
-	wstring path = m_Path + L"/objects/" + JStd::String::ToWide(obj.m_Hash.substr(0, 2), CP_UTF8) + L"/" + JStd::String::ToWide(obj.m_Hash.substr(2), CP_UTF8);
-	ifstream data;
-	data.open(path.c_str(), ios::in | ios::binary);
+	wstring objectPath;
+	if(basePath == NULL)
+		objectPath = m_Path + L"\\objects";
+	else
+		objectPath = basePath;
+
+	ifstream data(
+		(objectPath + L"/" + JStd::String::ToWide(obj.m_Hash.substr(0, 2), CP_UTF8) + L"/" + JStd::String::ToWide(obj.m_Hash.substr(2), CP_UTF8)).c_str(), 
+		ios::in | ios::binary);
 	if(data)
 	{
 		cout << "Yeah, opened!" << endl;
-		return;
+		return true;
 	}
 
-	for(JStd::CDirIterator iIdx((m_Path + L"\\objects\\pack\\*.idx").c_str()); iIdx; ++iIdx)
+//	data.open(m_Path + L"/objects/info/packs");
+//	std::string packName;
+//	while(getline(data, packName))
+	for(JStd::CDirIterator iIdx((objectPath + L"\\pack\\*.idx").c_str()); iIdx; ++iIdx)
 	{
-		ifstream fIdx((m_Path + L"\\objects\\pack\\" + iIdx.File().name).c_str(), ios::in | ios::binary);
+		ifstream fIdx((objectPath + L"\\pack\\" + iIdx.File().name).c_str(), ios::in | ios::binary);
 		idxFileHeader hdr;
 		fIdx.read((char*)&hdr, sizeof(hdr));
 		if(fIdx.gcount() != sizeof(hdr))
 			continue; //invalid idx file or old version?
-		
+
 	}
+
+	ifstream alternates((objectPath + L"\\info\\alternates").c_str());
+	string newObjectPath;
+	while(getline(alternates, newObjectPath))
+	{
+		JStd::String::TrimRight(newObjectPath, "\r\n ");
+		if(Open(obj, JStd::String::ToWide(newObjectPath, CP_UTF8).c_str()))
+			return true;
+	}
+
+	return false;
 }
 
 

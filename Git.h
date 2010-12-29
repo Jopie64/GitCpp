@@ -54,7 +54,7 @@ public:
 	void	LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL);
 	void	LoadRefs(MapRef& refMap);
 	void	EnsureNotSymbolic(CRef& ref);
-	void	Open(CObject& obj);
+	bool	Open(CObject& obj, const wchar_t* basePath = NULL);
 
 private:
 
