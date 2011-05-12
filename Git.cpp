@@ -7,7 +7,6 @@
 #include "jstd\DirIterator.h"
 #include <vector>
 #include <algorithm>
-#include "zlib\zlib.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -180,118 +179,7 @@ struct packFileHeader
 
 bool CRepo::Open(CObject& obj,const wchar_t* basePath)
 {
-	wstring objectPath;
-	if(basePath == NULL)
-		objectPath = m_Path + L"\\objects";
-	else
-		objectPath = basePath;
 
-	std::string hashStr = obj.GetHash().AsString();
-
-	ifstream data(
-		(objectPath + L"/" + JStd::String::ToWide(hashStr.substr(0, 2), CP_UTF8) + L"/" + JStd::String::ToWide(hashStr.substr(2), CP_UTF8)).c_str(), 
-		ios::in | ios::binary);
-	if(data)
-	{
-		cout << "Yeah, opened!" << endl;
-		return true;
-	}
-
-//	data.open(m_Path + L"/objects/info/packs");
-//	std::string packName;
-//	while(getline(data, packName))
-	for(JStd::CDirIterator iIdx((objectPath + L"\\pack\\*.idx").c_str()); iIdx; ++iIdx)
-	{
-		ifstream fIdx((objectPath + L"\\pack\\" + iIdx.File().name).c_str(), ios::in | ios::binary);
-		idxFileHeader hdr;
-		fIdx.read((char*)&hdr, sizeof(hdr));
-		if(fIdx.gcount() != sizeof(hdr))
-			continue; //invalid idx file or old version?
-
-		vectorSha1 sha1s(ntohl(hdr.fanout[255]));
-		size_t sizeSha1s = sizeof(JStd::CSha1Hash) * sha1s.size();
-		fIdx.read((char*)&*sha1s.begin(), sizeSha1s);
-		if(fIdx.gcount() != sizeSha1s)
-			continue;
-		
-		vectorSha1::iterator iSha1 = lower_bound(sha1s.begin(), sha1s.end(), obj.GetHash());
-		if(iSha1 == sha1s.end() || *iSha1 != obj.GetHash())
-			continue;
-
-		size_t ixSha1 = iSha1 - sha1s.begin();
-
-		size_t placeOffsetsStart = 
-			sizeof(hdr) +		//Header
-			sizeSha1s +			//Sha1's
-			sha1s.size() * 4;	//CRC's
-
-		unsigned int offsetPack;
-		fIdx.seekg(placeOffsetsStart + ixSha1 * 4);
-		fIdx.read((char*)&offsetPack, sizeof(offsetPack));
-		if(fIdx.gcount() != sizeof(offsetPack))
-			continue;
-
-		offsetPack = ntohl(offsetPack);
-
-		//Read packfile
-
-		wstring packFileName = iIdx.File().name;
-		size_t dot = packFileName.find('.');
-		if(dot == string::npos)
-			throw std::logic_error("Invalid index filename");
-
-		ifstream fPack((objectPath + L"\\pack\\" + packFileName.substr(0, dot) + L".pack").c_str(), ios::in | ios::binary);
-
-		packFileHeader packHdr;
-		fPack.read((char*)&packHdr, sizeof(packHdr));
-
-		if(fPack.gcount() != sizeof(packHdr))
-			throw std::logic_error("Invalid packfile format");
-
-		if(strncmp(packHdr.pack, "PACK", 4) != 0)
-			throw std::logic_error("Invalid packfile format (2)");
-
-		fPack.seekg(offsetPack);
-
-		char objHdrPart;
-		int objSize = 0;
-		fPack.read(&objHdrPart, 1);
-
-		char objType = (objHdrPart & 0x70) >> 4;
-		objSize = objHdrPart & 0x0f;
-
-		char shiftCount = 4;
-		while(objHdrPart < 0)
-		{
-			fPack.read(&objHdrPart, 1);
-			if(fPack.gcount() != 1)
-				throw std::logic_error("Invalid packfile format (3)");
-
-			objSize |= (objHdrPart & 0x7f) << shiftCount;
-
-			shiftCount += 7;
-		}
-
-
-
-
-
-
-//		cout <<  iIdx.File().name << endl;
-//		for(vectorSha1::iterator i=sha1s.begin(); i!= sha1s.end(); ++i)
-//			cout << i->AsString() << endl;
-
-//		cout << endl;
-	}
-
-	ifstream alternates((objectPath + L"\\info\\alternates").c_str());
-	string newObjectPath;
-	while(getline(alternates, newObjectPath))
-	{
-		JStd::String::TrimRight(newObjectPath, "\r\n ");
-		if(Open(obj, JStd::String::ToWide(newObjectPath, CP_UTF8).c_str()))
-			return true;
-	}
 
 	return false;
 }
