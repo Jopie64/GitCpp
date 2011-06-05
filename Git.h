@@ -3,9 +3,18 @@
 #include <string>
 #include <iostream>
 #include "jstd/Sha1.h"
+#include "git2.h"
 
 namespace Git
 {
+
+class CGitException : public std::runtime_error
+{
+public:
+	CGitException(int P_iErrorCode, const char* P_szDoingPtr);
+	int			m_iErrorCode;
+	std::string m_csDoing;
+};
 
 bool IsGitDir(const wchar_t* path);
 
@@ -51,16 +60,21 @@ class CRepo
 public:
 	CRepo(const wchar_t* P_szPathPtr);
 
-	CRef	GetRef(const wchar_t* refName);
-	void	LoadPackedRefs(MapRef& refMap);
-	void	LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL);
-	void	LoadRefs(MapRef& refMap);
-	void	EnsureNotSymbolic(CRef& ref);
-	bool	Open(CObject& obj, const wchar_t* basePath = NULL);
+	CRef			GetRef(const wchar_t* refName);
+	void			LoadPackedRefs(MapRef& refMap);
+	void			LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL);
+	void			LoadRefs(MapRef& refMap);
+	void			EnsureNotSymbolic(CRef& ref);
+	bool			Open(CObject& obj, const wchar_t* basePath = NULL);
+	std::wstring	GetWPath(git_repository_pathid id = GIT_REPO_PATH) const;
+	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;
+	static void		ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr);
 
 private:
+	CRepo(const CRepo&); //Non copyable
+	CRepo& operator=(const CRepo&);
 
-	std::wstring m_Path;
+	git_repository* m_pRepo;
 };
 
 

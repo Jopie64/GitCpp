@@ -16,6 +16,9 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	Git::CRepo repoTest(L"d:\\develop\\tortoisegit2");
 
+	cout << repoTest.GetPath() << endl;
+
+	/*
 //	Git::CRef ref = repoTest.GetRef(L"HEAD");
 	Git::CRef ref = repoTest.GetRef(L"refs/heads/test");
 
@@ -43,6 +46,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		<< JStd::CSHA1::FromString(hash.AsString(JStd::CSha1Hash::REPORT_HEX_DASHED).c_str()).AsString() << endl
 		<< JStd::CSHA1::FromString(hash.AsString().c_str()).AsString() << endl;
 
+*/
 
 
 

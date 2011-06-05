@@ -8,17 +8,25 @@
 #include <vector>
 #include <algorithm>
 
+
 #pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "libgit2.lib")
 
 namespace Git
 {
 using namespace std;
 
+CGitException::CGitException(int P_iErrorCode, const char* P_szDoingPtr)
+:	m_iErrorCode(P_iErrorCode),
+	std::runtime_error(JStd::String::Format("Git error code %d received during %s", P_iErrorCode, P_szDoingPtr))
+{
+}
+
 bool IsGitDir(const wchar_t* path)
 {
-	_stat dummy;
-	if(_wstat(JStd::String::Format(L"%s\\HEAD", path).c_str(), &dummy) != 0)
-		return false;
+//	_stat dummy;
+//	if(_wstat(JStd::String::Format(L"%s\\HEAD", path).c_str(), &dummy) != 0)
+//		return false;
 
 	return true;
 }
@@ -81,19 +89,34 @@ CObject::CObject(const JStd::CSha1Hash& hash)
 
 
 CRepo::CRepo(const wchar_t* path)
-:	m_Path(path)
+:	m_pRepo(NULL)
 {
-	if(!IsGitDir(m_Path.c_str()))
-		m_Path += L"\\.git";
-	if(!IsGitDir(m_Path.c_str()))
-		throw std::runtime_error("Not a git repository directory.");
-		
+	ThrowIfError(git_repository_open(&m_pRepo, JStd::String::ToMult(path, CP_UTF8).c_str()), "git_repository_open()");
+}
+
+void CRepo::ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr)
+{
+	if(P_iGitReturnCode != 0)
+		throw CGitException(P_iGitReturnCode, P_szDoingPtr);
+}
+
+std::wstring CRepo::GetWPath(git_repository_pathid id) const
+{
+	return JStd::String::ToWide(GetPath(id), CP_UTF8);
+}
+
+std::string CRepo::GetPath(git_repository_pathid id) const
+{
+	const char* pRet = git_repository_path(m_pRepo, id);
+	if(pRet == NULL)
+		throw CGitException(0, "git_repository_path()");
+	return pRet;
 }
 
 
 CRef CRepo::GetRef(const wchar_t* refName)
 {
-	ifstream file((m_Path + L"\\" + refName).c_str());
+	ifstream file((GetWPath() + L"\\" + refName).c_str());
 	if(file)
 	{
 		std::string refReturn;
@@ -112,7 +135,7 @@ CRef CRepo::GetRef(const wchar_t* refName)
 
 void CRepo::LoadPackedRefs(MapRef& refMap)
 {
-	ifstream file((m_Path + L"\\packed-refs").c_str());
+	ifstream file((GetWPath() + L"\\packed-refs").c_str());
 	string ref;
 	string refName;
 	while(getline(file, ref, ' '))
@@ -128,7 +151,7 @@ void CRepo::LoadFileRefs(MapRef& refMap, const wchar_t* subPath)
 {
 	if(subPath == NULL)
 		subPath = L"refs";
-	for(JStd::CDirIterator refDir((m_Path + L"/" + subPath + L"/*").c_str()); refDir; ++refDir)
+	for(JStd::CDirIterator refDir((GetWPath() + L"/" + subPath + L"/*").c_str()); refDir; ++refDir)
 	{
 		std::wstring refPart = wstring(subPath) + L"/" + refDir.File().name;
 		if(refDir.IsDirectory())
