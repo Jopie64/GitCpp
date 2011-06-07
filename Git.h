@@ -15,6 +15,7 @@ public:
 	int			m_iErrorCode;
 	std::string m_csDoing;
 };
+void ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr);
 
 bool IsGitDir(const wchar_t* path);
 
@@ -38,21 +39,70 @@ private:
 	std::string m_Hash;
 };
 
+
 typedef std::map<std::string, CRef> MapRef;
 
 std::ostream& operator<<(std::ostream& str, const CRef& ref);
+
+
+class COid
+{
+friend std::ostream& operator<<(std::ostream& str, const COid& oid);
+friend class COdb;
+
+public:
+	COid();
+	COid(const char* hexStr);
+
+	static COid FromHexString(const char* hexStr);
+	COid& operator=(const char* hexStr);
+private:
+	git_oid m_oid;
+};
+
+
+std::ostream& operator<<(std::ostream& str, const COid& oid);
+
+class CObjType
+{
+public:
+	CObjType(git_otype otype);
+private:
+	git_otype m_otype;
+};
 
 class CObject
 {
 public:
 	CObject();
-	CObject(const JStd::CSha1Hash& hash);
+	CObject(git_odb_object* obj);
+	virtual ~CObject();
 
-	JStd::CSha1Hash GetHash()const{return m_Hash;}
+	void		Attach(git_odb_object* obj);
+	void		Close();
+	bool		IsValid() const;
+	void		CheckValid() const;
+	const char* Data() const;
+	CObjType	Type() const;
+
+private:
+	CObject(const CObject&);
+	CObject& operator=(const CObject&);
+
+	git_odb_object* m_obj;
+};
 
 
+class COdb
+{
+public:
+	COdb(git_odb* odb);
 
-	JStd::CSha1Hash m_Hash;
+	void Read(CObject& obj, const COid& oid);
+
+private:
+
+	git_odb* m_odb;
 };
 
 class CRepo
@@ -69,7 +119,7 @@ public:
 	bool			Open(CObject& obj, const wchar_t* basePath = NULL);
 	std::wstring	GetWPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;
-	static void		ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr);
+	COdb			Odb();
 
 private:
 	CRepo(const CRepo&); //Non copyable

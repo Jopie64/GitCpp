@@ -2,6 +2,9 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GitCpp", "GitCpp.vcproj", "{62312724-EDD2-4666-8418-D8244329D8FB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4} = {3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgit2", "libgit2.vcproj", "{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}"
 EndProject

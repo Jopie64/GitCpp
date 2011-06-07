@@ -19,6 +19,14 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	cout << repoTest.GetPath() << endl;
 
+	Git::COdb W_Odb1 = repoTest.Odb();
+	Git::COdb W_Odb2 = repoTest.Odb();
+
+	cout << "Doe de test" << endl;
+
+	Git::CObject W_Obj;
+	repoTest.Odb().Read(W_Obj, "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759");
+	cout << W_Obj.Data();
 	/*
 //	Git::CRef ref = repoTest.GetRef(L"HEAD");
 	Git::CRef ref = repoTest.GetRef(L"refs/heads/test");

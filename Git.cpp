@@ -22,6 +22,12 @@ CGitException::CGitException(int P_iErrorCode, const char* P_szDoingPtr)
 {
 }
 
+void ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr)
+{
+	if(P_iGitReturnCode != 0)
+		throw CGitException(P_iGitReturnCode, P_szDoingPtr);
+}
+
 bool IsGitDir(const wchar_t* path)
 {
 //	_stat dummy;
@@ -75,18 +81,106 @@ std::ostream& operator<<(std::ostream& str, const CRef& ref)
 	return str;
 }
 
+COid COid::FromHexString(const char* hexStr)
+{
+	COid ret;
+	ThrowIfError(git_oid_mkstr(&ret.m_oid, hexStr), "git_oid_mkstr()");
+	return ret;
+}
+
+COid::COid()
+{
+}
+
+COid::COid(const char* hexStr)
+{
+	*this = FromHexString(hexStr);
+}
+
+COid& COid::operator=(const char* hexStr)
+{
+	*this = FromHexString(hexStr);
+	return *this;
+}
+
+
+std::ostream& operator<<(std::ostream& str, const COid& oid)
+{
+	char out[40];
+	git_oid_fmt(out,&oid.m_oid);
+	str.write(out,40);
+	return str;
+}
+
+COdb::COdb(git_odb* odb)
+:	m_odb(odb)
+{
+}
+
+CObjType::CObjType(git_otype otype)
+:	m_otype(otype)
+{
+}
+
+CObject::CObject(git_odb_object* obj)
+:	m_obj(obj)
+{
+}
 
 
 CObject::CObject()
+:	m_obj(NULL)
 {
 }
 
-CObject::CObject(const JStd::CSha1Hash& hash)
-:	m_Hash(hash)
+CObject::~CObject()
 {
+	Close();
 }
 
+void CObject::Attach(git_odb_object* obj)
+{
+	Close();
+	m_obj = obj;
+}
 
+void CObject::Close()
+{
+	if(!IsValid())
+		return;
+	git_odb_object_close(m_obj);
+	m_obj = NULL;
+}
+
+bool CObject::IsValid() const
+{
+	return m_obj != NULL;
+}
+
+void CObject::CheckValid() const
+{
+	if(!IsValid())
+		throw std::runtime_error("Object not valid");
+}
+
+const char* CObject::Data()const
+{
+	CheckValid();
+	return (const char*)git_odb_object_data(m_obj);
+}
+
+CObjType CObject::Type()const
+{
+	CheckValid();
+	return git_odb_object_type(m_obj);
+}
+
+void COdb::Read(CObject& obj, const COid& oid)
+{
+	git_odb_object* pobj = NULL;
+	ThrowIfError(git_odb_read(&pobj, m_odb, &oid.m_oid), "git_odb_read()");
+	obj.Attach(pobj);
+}
 
 CRepo::CRepo(const wchar_t* path)
 :	m_pRepo(NULL)
@@ -100,11 +194,6 @@ CRepo::~CRepo()
 }
 
 
-void CRepo::ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr)
-{
-	if(P_iGitReturnCode != 0)
-		throw CGitException(P_iGitReturnCode, P_szDoingPtr);
-}
 
 std::wstring CRepo::GetWPath(git_repository_pathid id) const
 {
@@ -210,6 +299,11 @@ bool CRepo::Open(CObject& obj,const wchar_t* basePath)
 
 
 	return false;
+}
+
+COdb CRepo::Odb()
+{
+	return git_repository_database(m_pRepo);
 }
 
 
