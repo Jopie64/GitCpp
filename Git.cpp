@@ -10,7 +10,7 @@
 
 
 #pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "libgit2.lib")
+#pragma comment(lib, "git2.lib")
 
 namespace Git
 {
@@ -18,7 +18,7 @@ using namespace std;
 
 CGitException::CGitException(int P_iErrorCode, const char* P_szDoingPtr)
 :	m_iErrorCode(P_iErrorCode),
-	std::runtime_error(JStd::String::Format("Git error code %d received during %s", P_iErrorCode, P_szDoingPtr))
+	std::runtime_error(JStd::String::Format("Git error code %d received during %s. %s", P_iErrorCode, P_szDoingPtr, git_strerror(P_iErrorCode)))
 {
 }
 
@@ -93,6 +93,12 @@ CRepo::CRepo(const wchar_t* path)
 {
 	ThrowIfError(git_repository_open(&m_pRepo, JStd::String::ToMult(path, CP_UTF8).c_str()), "git_repository_open()");
 }
+
+CRepo::~CRepo()
+{
+	git_repository_free(m_pRepo);
+}
+
 
 void CRepo::ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr)
 {
@@ -197,7 +203,6 @@ struct packFileHeader
 	char	something;
 
 };
-
 
 
 bool CRepo::Open(CObject& obj,const wchar_t* basePath)

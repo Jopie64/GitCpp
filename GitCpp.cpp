@@ -13,8 +13,9 @@ using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-
-	Git::CRepo repoTest(L"d:\\develop\\tortoisegit2");
+	try
+	{
+		Git::CRepo repoTest(L"d:\\develop\\tortoisegit2\\.git\\");
 
 	cout << repoTest.GetPath() << endl;
 
@@ -50,6 +51,11 @@ int _tmain(int argc, _TCHAR* argv[])
 
 
 
+	}
+	catch(std::exception& e)
+	{
+		cout << "An exception occurred: " << e.what() << endl;
+	}
 
 
 	char c;
