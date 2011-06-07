@@ -15,7 +15,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	try
 	{
-		Git::CRepo repoTest(L"d:\\develop\\tortoisegit2\\.git\\");
+		Git::CRepo repoTest(L"d:/develop/tortoisegit2/.git/");
 
 	cout << repoTest.GetPath() << endl;
 
