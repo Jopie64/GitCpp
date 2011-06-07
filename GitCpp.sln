@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GitCpp", "GitCpp.vcproj", "{62312724-EDD2-4666-8418-D8244329D8FB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgit2", "libgit2.vcproj", "{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -13,6 +15,10 @@ Global
 		{62312724-EDD2-4666-8418-D8244329D8FB}.Debug|Win32.Build.0 = Debug|Win32
 		{62312724-EDD2-4666-8418-D8244329D8FB}.Release|Win32.ActiveCfg = Release|Win32
 		{62312724-EDD2-4666-8418-D8244329D8FB}.Release|Win32.Build.0 = Release|Win32
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.Debug|Win32.Build.0 = Debug|Win32
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.Release|Win32.ActiveCfg = Release|Win32
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
