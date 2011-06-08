@@ -188,20 +188,7 @@ ostream& operator<<(ostream& P_os, const CObject& P_Obj)
 
 const char* CObjType::AsString() const
 {
-	switch(m_otype)
-	{
-	case GIT_OBJ_ANY:		return "Any";		//  Object can be any of the following
-	case GIT_OBJ_BAD:		return "Bad";		//  Object is invalid.
-	case GIT_OBJ__EXT1:		return "_Ext1";		//  Reserved for future use.
-	case GIT_OBJ_COMMIT:	return "Commit";	//  A commit object.
-	case GIT_OBJ_TREE:		return "Tree";		//  A tree (directory listing) object.
-	case GIT_OBJ_BLOB:		return "Blob";		//  A file revision object.
-	case GIT_OBJ_TAG:		return "Tag";		//  An annotated tag object.
-	case GIT_OBJ__EXT2:		return "_Ext2";		//  Reserved for future use.
-	case GIT_OBJ_OFS_DELTA:	return "OfsDelta";	//  A delta, base is given by an offset.
-	case GIT_OBJ_REF_DELTA:	return "RefDelta";	//  A delta, base is given by object id.
-	}
-	return "Unknown";
+	return git_object_type2string(m_otype);
 }
 
 std::ostream& operator<<(std::ostream& str, const CObjType& ot)
