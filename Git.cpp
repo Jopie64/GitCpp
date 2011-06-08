@@ -169,10 +169,44 @@ const char* CObject::Data()const
 	return (const char*)git_odb_object_data(m_obj);
 }
 
+size_t CObject::Size() const
+{
+	CheckValid();
+	return git_odb_object_size(m_obj);
+}
+
 CObjType CObject::Type()const
 {
 	CheckValid();
 	return git_odb_object_type(m_obj);
+}
+
+ostream& operator<<(ostream& P_os, const CObject& P_Obj)
+{
+	return P_os.write(P_Obj.Data(), P_Obj.Size());
+}
+
+const char* CObjType::AsString() const
+{
+	switch(m_otype)
+	{
+	case GIT_OBJ_ANY:		return "Any";		//  Object can be any of the following
+	case GIT_OBJ_BAD:		return "Bad";		//  Object is invalid.
+	case GIT_OBJ__EXT1:		return "_Ext1";		//  Reserved for future use.
+	case GIT_OBJ_COMMIT:	return "Commit";	//  A commit object.
+	case GIT_OBJ_TREE:		return "Tree";		//  A tree (directory listing) object.
+	case GIT_OBJ_BLOB:		return "Blob";		//  A file revision object.
+	case GIT_OBJ_TAG:		return "Tag";		//  An annotated tag object.
+	case GIT_OBJ__EXT2:		return "_Ext2";		//  Reserved for future use.
+	case GIT_OBJ_OFS_DELTA:	return "OfsDelta";	//  A delta, base is given by an offset.
+	case GIT_OBJ_REF_DELTA:	return "RefDelta";	//  A delta, base is given by object id.
+	}
+	return "Unknown";
+}
+
+std::ostream& operator<<(std::ostream& str, const CObjType& ot)
+{
+	return str << ot.AsString();
 }
 
 void COdb::Read(CObject& obj, const COid& oid)

@@ -67,9 +67,13 @@ class CObjType
 {
 public:
 	CObjType(git_otype otype);
+	const char* AsString() const;
+
 private:
 	git_otype m_otype;
 };
+
+std::ostream& operator<<(std::ostream& str, const CObjType& ot);
 
 class CObject
 {
@@ -83,6 +87,7 @@ public:
 	bool		IsValid() const;
 	void		CheckValid() const;
 	const char* Data() const;
+	size_t		Size() const;
 	CObjType	Type() const;
 
 private:
@@ -92,6 +97,7 @@ private:
 	git_odb_object* m_obj;
 };
 
+std::ostream& operator<<(std::ostream& P_os, const CObject& P_Obj);
 
 class COdb
 {

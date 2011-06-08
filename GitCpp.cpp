@@ -15,7 +15,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	try
 	{
-		Git::CRepo repoTest(L"d:/develop/tortoisegit2/.git/");
+		Git::CRepo repoTest(L"d:/develop/tortoisegit2/.git");
 
 	cout << repoTest.GetPath() << endl;
 
@@ -26,7 +26,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	Git::CObject W_Obj;
 	repoTest.Odb().Read(W_Obj, "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759");
-	cout << W_Obj.Data();
+	cout << "Object is of type " << W_Obj.Type() << endl
+		<< W_Obj << endl;
 	/*
 //	Git::CRef ref = repoTest.GetRef(L"HEAD");
 	Git::CRef ref = repoTest.GetRef(L"refs/heads/test");
