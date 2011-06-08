@@ -203,6 +203,13 @@ void COdb::Read(CObject& obj, const COid& oid)
 	obj.Attach(pobj);
 }
 
+COid COdb::Write(const CObjType& ot, const void* data, size_t size)
+{
+	COid ret;
+	ThrowIfError(git_odb_write(&ret.m_oid, m_odb, data, size, ot.Get()), "git_odb_write()");
+	return ret;
+}
+
 CRepo::CRepo(const wchar_t* path)
 :	m_pRepo(NULL)
 {

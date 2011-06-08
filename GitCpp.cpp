@@ -28,6 +28,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	repoTest.Odb().Read(W_Obj, "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759");
 	cout << "Object is of type " << W_Obj.Type() << endl
 		<< W_Obj << endl;
+
+	Git::COid W_Id = repoTest.Odb().Write(GIT_OBJ_BLOB, "Hello World!", 12);
+	cout << "Blob got ID " << W_Id << endl;
+
+	repoTest.Odb().Read(W_Obj, W_Id);
+	cout << "Content: " << W_Obj << endl;
 	/*
 //	Git::CRef ref = repoTest.GetRef(L"HEAD");
 	Git::CRef ref = repoTest.GetRef(L"refs/heads/test");

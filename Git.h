@@ -69,6 +69,7 @@ public:
 	CObjType(git_otype otype);
 	const char* AsString() const;
 
+	git_otype Get() const {return m_otype;}
 private:
 	git_otype m_otype;
 };
@@ -105,6 +106,7 @@ public:
 	COdb(git_odb* odb);
 
 	void Read(CObject& obj, const COid& oid);
+	COid Write(const CObjType& ot, const void* data, size_t size);
 
 private:
 
