@@ -123,62 +123,31 @@ CObjType::CObjType(git_otype otype)
 }
 
 CRawObject::CRawObject(git_odb_object* obj)
-:	m_obj(obj)
+:	CObjectTempl(obj)
 {
 }
 
 
 CRawObject::CRawObject()
-:	m_obj(NULL)
 {
-}
-
-CRawObject::~CRawObject()
-{
-	Close();
-}
-
-void CRawObject::Attach(git_odb_object* obj)
-{
-	Close();
-	m_obj = obj;
-}
-
-void CRawObject::Close()
-{
-	if(!IsValid())
-		return;
-	git_odb_object_close(m_obj);
-	m_obj = NULL;
-}
-
-bool CRawObject::IsValid() const
-{
-	return m_obj != NULL;
-}
-
-void CRawObject::CheckValid() const
-{
-	if(!IsValid())
-		throw std::runtime_error("Object not valid");
 }
 
 const char* CRawObject::Data()const
 {
 	CheckValid();
-	return (const char*)git_odb_object_data(m_obj);
+	return (const char*)git_odb_object_data(Obj());
 }
 
 size_t CRawObject::Size() const
 {
 	CheckValid();
-	return git_odb_object_size(m_obj);
+	return git_odb_object_size(Obj());
 }
 
 CObjType CRawObject::Type()const
 {
 	CheckValid();
-	return git_odb_object_type(m_obj);
+	return git_odb_object_type(Obj());
 }
 
 ostream& operator<<(ostream& P_os, const CRawObject& P_Obj)

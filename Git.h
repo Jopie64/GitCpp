@@ -78,17 +78,37 @@ std::ostream& operator<<(std::ostream& str, const CObjType& ot);
 
 class CObject { public: virtual ~CObject() {} };
 
-class CRawObject : public CObject
+template<class T_GitObj>
+void CloseWithObjectClose(T_GitObj* obj)	{ git_object_close((git_object*)obj); }
+
+template<class T_GitObj, void (*CloseFunc)(T_GitObj*) >
+class CObjectTempl : public CObject
+{
+public:
+	CObjectTempl():m_obj(NULL)				{}
+	CObjectTempl(T_GitObj* obj):m_obj(obj)	{}
+	virtual ~CObjectTempl()					{ Close(); }
+
+	void		Attach(T_GitObj* obj)		{ Close(); m_obj = obj; }
+	void		Close()						{ if(!IsValid()) return; CloseFunc(m_obj); m_obj = NULL; }
+	bool		IsValid() const				{ return m_obj != NULL; }
+	void		CheckValid() const			{ if(!IsValid()) throw std::runtime_error("Object not valid"); }
+	T_GitObj*	Obj() const					{ CheckValid(); return m_obj; }
+
+private:
+	CObjectTempl(const CObjectTempl&);
+	CObjectTempl& operator=(const CObjectTempl&);
+
+	T_GitObj* m_obj;
+};
+
+
+class CRawObject : public CObjectTempl<git_odb_object, &git_odb_object_close>
 {
 public:
 	CRawObject();
 	CRawObject(git_odb_object* obj);
-	virtual ~CRawObject();
 
-	void		Attach(git_odb_object* obj);
-	void		Close();
-	bool		IsValid() const;
-	void		CheckValid() const;
 	const char* Data() const;
 	size_t		Size() const;
 	CObjType	Type() const;
@@ -97,7 +117,20 @@ private:
 	CRawObject(const CRawObject&);
 	CRawObject& operator=(const CRawObject&);
 
-	git_odb_object* m_obj;
+};
+
+class CCommit : public CObjectTempl<git_commit, &CloseWithObjectClose<git_commit> >
+{
+public:
+	CCommit();
+	CCommit(git_commit* obj);
+	virtual ~CCommit();
+
+private:
+	CCommit(const CRawObject&);
+	CCommit& operator=(const CRawObject&);
+
+	git_commit* m_obj;
 };
 
 std::ostream& operator<<(std::ostream& P_os, const CRawObject& P_Obj);
