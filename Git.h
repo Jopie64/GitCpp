@@ -49,6 +49,7 @@ class COid
 {
 friend std::ostream& operator<<(std::ostream& str, const COid& oid);
 friend class COdb;
+friend class CRepo;
 
 public:
 	COid();
@@ -140,7 +141,8 @@ class COdb
 public:
 	COdb(git_odb* odb);
 
-	void Read(CRawObject& obj, const COid& oid);
+	void Read(CRawObject& obj,	const COid& oid);
+	void Read(CCommit& obj,		const COid& oid);
 	COid Write(const CObjType& ot, const void* data, size_t size);
 
 private:
@@ -159,7 +161,8 @@ public:
 	void			LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL);
 	void			LoadRefs(MapRef& refMap);
 	void			EnsureNotSymbolic(CRef& ref);
-	bool			Open(CRawObject& obj, const wchar_t* basePath = NULL);
+	bool			Open(CRawObject& obj,	const wchar_t* basePath = NULL);
+	void			Read(CCommit& obj,		const COid& oid);
 	std::wstring	GetWPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	COdb			Odb();

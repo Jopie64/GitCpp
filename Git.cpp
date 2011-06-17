@@ -290,6 +290,13 @@ struct packFileHeader
 
 };
 
+void CRepo::Read(CCommit& obj, const COid& oid)
+{
+	git_commit* pobj = NULL;
+	ThrowIfError(git_commit_lookup(&pobj, m_pRepo, &oid.m_oid), "git_commit_lookup()");
+	obj.Attach(pobj);
+}
+
 
 bool CRepo::Open(CRawObject& obj,const wchar_t* basePath)
 {
