@@ -24,7 +24,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	cout << "Doe de test" << endl;
 
-	Git::CObject W_Obj;
+	Git::CRawObject W_Obj;
 	repoTest.Odb().Read(W_Obj, "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759");
 	cout << "Object is of type " << W_Obj.Type() << endl
 		<< W_Obj << endl;
@@ -50,7 +50,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		cout << i->first << " " << i->second << endl;
 	}
 
-	Git::CObject obj(JStd::CSHA1::FromString(ref.Hash().c_str()));
+	Git::CRawObject obj(JStd::CSHA1::FromString(ref.Hash().c_str()));
 	repoTest.Open(obj);
 
 

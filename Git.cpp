@@ -122,29 +122,29 @@ CObjType::CObjType(git_otype otype)
 {
 }
 
-CObject::CObject(git_odb_object* obj)
+CRawObject::CRawObject(git_odb_object* obj)
 :	m_obj(obj)
 {
 }
 
 
-CObject::CObject()
+CRawObject::CRawObject()
 :	m_obj(NULL)
 {
 }
 
-CObject::~CObject()
+CRawObject::~CRawObject()
 {
 	Close();
 }
 
-void CObject::Attach(git_odb_object* obj)
+void CRawObject::Attach(git_odb_object* obj)
 {
 	Close();
 	m_obj = obj;
 }
 
-void CObject::Close()
+void CRawObject::Close()
 {
 	if(!IsValid())
 		return;
@@ -152,36 +152,36 @@ void CObject::Close()
 	m_obj = NULL;
 }
 
-bool CObject::IsValid() const
+bool CRawObject::IsValid() const
 {
 	return m_obj != NULL;
 }
 
-void CObject::CheckValid() const
+void CRawObject::CheckValid() const
 {
 	if(!IsValid())
 		throw std::runtime_error("Object not valid");
 }
 
-const char* CObject::Data()const
+const char* CRawObject::Data()const
 {
 	CheckValid();
 	return (const char*)git_odb_object_data(m_obj);
 }
 
-size_t CObject::Size() const
+size_t CRawObject::Size() const
 {
 	CheckValid();
 	return git_odb_object_size(m_obj);
 }
 
-CObjType CObject::Type()const
+CObjType CRawObject::Type()const
 {
 	CheckValid();
 	return git_odb_object_type(m_obj);
 }
 
-ostream& operator<<(ostream& P_os, const CObject& P_Obj)
+ostream& operator<<(ostream& P_os, const CRawObject& P_Obj)
 {
 	return P_os.write(P_Obj.Data(), P_Obj.Size());
 }
@@ -196,7 +196,7 @@ std::ostream& operator<<(std::ostream& str, const CObjType& ot)
 	return str << ot.AsString();
 }
 
-void COdb::Read(CObject& obj, const COid& oid)
+void COdb::Read(CRawObject& obj, const COid& oid)
 {
 	git_odb_object* pobj = NULL;
 	ThrowIfError(git_odb_read(&pobj, m_odb, &oid.m_oid), "git_odb_read()");
@@ -322,7 +322,7 @@ struct packFileHeader
 };
 
 
-bool CRepo::Open(CObject& obj,const wchar_t* basePath)
+bool CRepo::Open(CRawObject& obj,const wchar_t* basePath)
 {
 
 

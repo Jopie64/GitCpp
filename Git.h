@@ -76,12 +76,14 @@ private:
 
 std::ostream& operator<<(std::ostream& str, const CObjType& ot);
 
-class CObject
+class CObject { public: virtual ~CObject() {} };
+
+class CRawObject : public CObject
 {
 public:
-	CObject();
-	CObject(git_odb_object* obj);
-	virtual ~CObject();
+	CRawObject();
+	CRawObject(git_odb_object* obj);
+	virtual ~CRawObject();
 
 	void		Attach(git_odb_object* obj);
 	void		Close();
@@ -92,20 +94,20 @@ public:
 	CObjType	Type() const;
 
 private:
-	CObject(const CObject&);
-	CObject& operator=(const CObject&);
+	CRawObject(const CRawObject&);
+	CRawObject& operator=(const CRawObject&);
 
 	git_odb_object* m_obj;
 };
 
-std::ostream& operator<<(std::ostream& P_os, const CObject& P_Obj);
+std::ostream& operator<<(std::ostream& P_os, const CRawObject& P_Obj);
 
 class COdb
 {
 public:
 	COdb(git_odb* odb);
 
-	void Read(CObject& obj, const COid& oid);
+	void Read(CRawObject& obj, const COid& oid);
 	COid Write(const CObjType& ot, const void* data, size_t size);
 
 private:
@@ -124,7 +126,7 @@ public:
 	void			LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL);
 	void			LoadRefs(MapRef& refMap);
 	void			EnsureNotSymbolic(CRef& ref);
-	bool			Open(CObject& obj, const wchar_t* basePath = NULL);
+	bool			Open(CRawObject& obj, const wchar_t* basePath = NULL);
 	std::wstring	GetWPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	COdb			Odb();
