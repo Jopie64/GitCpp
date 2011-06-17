@@ -84,7 +84,7 @@ std::ostream& operator<<(std::ostream& str, const CRef& ref)
 COid COid::FromHexString(const char* hexStr)
 {
 	COid ret;
-	ThrowIfError(git_oid_mkstr(&ret.m_oid, hexStr), "git_oid_mkstr()");
+	ThrowIfError(git_oid_fromstr(&ret.m_oid, hexStr), "git_oid_fromstr()");
 	return ret;
 }
 
