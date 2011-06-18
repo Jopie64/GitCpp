@@ -54,6 +54,7 @@ friend class CRepo;
 public:
 	COid();
 	COid(const char* hexStr);
+	COid(const git_oid& P_oid):m_oid(P_oid){}
 
 	static COid FromHexString(const char* hexStr);
 	COid& operator=(const char* hexStr);
@@ -100,6 +101,7 @@ private:
 	CObjectTempl(const CObjectTempl&);
 	CObjectTempl& operator=(const CObjectTempl&);
 
+protected:
 	T_GitObj* m_obj;
 };
 
@@ -114,9 +116,6 @@ public:
 	size_t		Size() const;
 	CObjType	Type() const;
 
-private:
-	CRawObject(const CRawObject&);
-	CRawObject& operator=(const CRawObject&);
 
 };
 
@@ -127,11 +126,12 @@ public:
 	CCommit(git_commit* obj);
 	virtual ~CCommit();
 
-private:
-	CCommit(const CRawObject&);
-	CCommit& operator=(const CRawObject&);
-
-	git_commit* m_obj;
+	std::string				Message() const;
+	std::string				MessageShort() const;
+	const git_signature*	Author() const;
+	const git_signature*	Committer() const;
+	time_t					Time() const;
+	COid					Tree() const;
 };
 
 std::ostream& operator<<(std::ostream& P_os, const CRawObject& P_Obj);
@@ -142,7 +142,6 @@ public:
 	COdb(git_odb* odb);
 
 	void Read(CRawObject& obj,	const COid& oid);
-	void Read(CCommit& obj,		const COid& oid);
 	COid Write(const CObjType& ot, const void* data, size_t size);
 
 private:
@@ -161,7 +160,6 @@ public:
 	void			LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL);
 	void			LoadRefs(MapRef& refMap);
 	void			EnsureNotSymbolic(CRef& ref);
-	bool			Open(CRawObject& obj,	const wchar_t* basePath = NULL);
 	void			Read(CCommit& obj,		const COid& oid);
 	std::wstring	GetWPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;

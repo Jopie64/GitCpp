@@ -165,6 +165,48 @@ std::ostream& operator<<(std::ostream& str, const CObjType& ot)
 	return str << ot.AsString();
 }
 
+CCommit::CCommit()
+{
+}
+
+CCommit::CCommit(git_commit* obj)
+:	CObjectTempl(obj)
+{
+}
+
+CCommit::~CCommit(){}
+
+std::string CCommit::Message() const
+{
+	return git_commit_message(m_obj);
+}
+
+std::string CCommit::MessageShort() const
+{
+	return git_commit_message_short(m_obj);
+}
+
+const git_signature* CCommit::Author() const
+{
+	return git_commit_author(m_obj);
+}
+
+const git_signature* CCommit::Committer() const
+{
+	return git_commit_committer(m_obj);
+}
+
+time_t CCommit::Time() const
+{
+	return git_commit_time(m_obj);
+}
+
+COid CCommit::Tree() const
+{
+	return *git_commit_tree_oid(m_obj);
+}
+
+
 void COdb::Read(CRawObject& obj, const COid& oid)
 {
 	git_odb_object* pobj = NULL;
@@ -297,13 +339,6 @@ void CRepo::Read(CCommit& obj, const COid& oid)
 	obj.Attach(pobj);
 }
 
-
-bool CRepo::Open(CRawObject& obj,const wchar_t* basePath)
-{
-
-
-	return false;
-}
 
 COdb CRepo::Odb()
 {

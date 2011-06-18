@@ -15,6 +15,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	try
 	{
+		Git::COid someCommitOid = "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759";
 		Git::CRepo repoTest(L"d:/develop/tortoisegit2/.git");
 
 	cout << repoTest.GetPath() << endl;
@@ -25,7 +26,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	cout << "Doe de test" << endl;
 
 	Git::CRawObject W_Obj;
-	repoTest.Odb().Read(W_Obj, "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759");
+	repoTest.Odb().Read(W_Obj, someCommitOid);
 	cout << "Object is of type " << W_Obj.Type() << endl
 		<< W_Obj << endl;
 
@@ -34,6 +35,13 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	repoTest.Odb().Read(W_Obj, W_Id);
 	cout << "Content: " << W_Obj << endl;
+
+	Git::CCommit W_Commit;
+	repoTest.Read(W_Commit, someCommitOid);
+	
+	cout << "Msg: " << W_Commit.Message() << endl;
+	cout << "ShortMsg: " << W_Commit.MessageShort() << endl;
+	cout << "Author: " << W_Commit.Author()->name << endl;
 	/*
 //	Git::CRef ref = repoTest.GetRef(L"HEAD");
 	Git::CRef ref = repoTest.GetRef(L"refs/heads/test");
