@@ -135,19 +135,19 @@ CRawObject::CRawObject()
 const char* CRawObject::Data()const
 {
 	CheckValid();
-	return (const char*)git_odb_object_data(Obj());
+	return (const char*)git_odb_object_data(GetInternalObj());
 }
 
 size_t CRawObject::Size() const
 {
 	CheckValid();
-	return git_odb_object_size(Obj());
+	return git_odb_object_size(GetInternalObj());
 }
 
 CObjType CRawObject::Type()const
 {
 	CheckValid();
-	return git_odb_object_type(Obj());
+	return git_odb_object_type(GetInternalObj());
 }
 
 ostream& operator<<(ostream& P_os, const CRawObject& P_Obj)
@@ -222,14 +222,14 @@ COid COdb::Write(const CObjType& ot, const void* data, size_t size)
 }
 
 CRepo::CRepo(const wchar_t* path)
-:	m_pRepo(NULL)
 {
-	ThrowIfError(git_repository_open(&m_pRepo, JStd::String::ToMult(path, CP_UTF8).c_str()), "git_repository_open()");
+	git_repository* repo = NULL;
+	ThrowIfError(git_repository_open(&repo, JStd::String::ToMult(path, CP_UTF8).c_str()), "git_repository_open()");
+	Attach(repo);
 }
 
 CRepo::~CRepo()
 {
-	git_repository_free(m_pRepo);
 }
 
 
@@ -241,7 +241,7 @@ std::wstring CRepo::GetWPath(git_repository_pathid id) const
 
 std::string CRepo::GetPath(git_repository_pathid id) const
 {
-	const char* pRet = git_repository_path(m_pRepo, id);
+	const char* pRet = git_repository_path(GetInternalObj(), id);
 	if(pRet == NULL)
 		throw CGitException(0, "git_repository_path()");
 	return pRet;
@@ -335,14 +335,35 @@ struct packFileHeader
 void CRepo::Read(CCommit& obj, const COid& oid)
 {
 	git_commit* pobj = NULL;
-	ThrowIfError(git_commit_lookup(&pobj, m_pRepo, &oid.m_oid), "git_commit_lookup()");
+	ThrowIfError(git_commit_lookup(&pobj, GetInternalObj(), &oid.m_oid), "git_commit_lookup()");
 	obj.Attach(pobj);
 }
 
 
 COdb CRepo::Odb()
 {
-	return git_repository_database(m_pRepo);
+	return git_repository_database(GetInternalObj());
+}
+
+
+CCommitWalker::CCommitWalker()
+{
+}
+
+CCommitWalker::CCommitWalker(CRepo& repo)
+{
+	Init(repo);
+}
+
+void CCommitWalker::Init(CRepo& repo)
+{
+	git_revwalk* walker;
+	ThrowIfError(git_revwalk_new(&walker, repo.GetInternalObj()), "git_revwalk_new()");
+	Attach(walker);
+}
+
+CCommitWalker::~CCommitWalker()
+{
 }
 
 

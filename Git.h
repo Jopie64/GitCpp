@@ -17,6 +17,32 @@ public:
 };
 void ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr);
 
+template<class T_GitObj, void (*CloseFunc)(T_GitObj*) >
+class CLibGitObjWrapper
+{
+public:
+	CLibGitObjWrapper():m_obj(NULL)				{}
+	CLibGitObjWrapper(T_GitObj* obj):m_obj(obj)	{}
+	virtual ~CLibGitObjWrapper()				{ Close(); }
+
+	void		Attach(T_GitObj* obj)			{ Close(); m_obj = obj; }
+	void		Close()							{ if(!IsValid()) return; CloseFunc(m_obj); m_obj = NULL; }
+	bool		IsValid() const					{ return m_obj != NULL; }
+	void		CheckValid() const				{ if(!IsValid()) throw std::runtime_error("libgit object not valid"); }
+	T_GitObj*	GetInternalObj() const			{ CheckValid(); return m_obj; }
+
+	typedef bool (CLibGitObjWrapper::*T_IsValidFuncPtr)() const;
+	operator T_IsValidFuncPtr () const {return IsValid() ? &CLibGitObjWrapper::IsValid : NULL;}
+
+private:
+	CLibGitObjWrapper(const CLibGitObjWrapper&); //Libgit objects are not copyable
+	CLibGitObjWrapper& operator=(const CLibGitObjWrapper&);
+
+protected:
+	T_GitObj* m_obj;
+};
+
+
 bool IsGitDir(const wchar_t* path);
 
 class CRef
@@ -84,27 +110,12 @@ template<class T_GitObj>
 void CloseWithObjectClose(T_GitObj* obj)	{ git_object_close((git_object*)obj); }
 
 template<class T_GitObj, void (*CloseFunc)(T_GitObj*) >
-class CObjectTempl : public CObject
+class CObjectTempl : public CLibGitObjWrapper<T_GitObj, CloseFunc>, public CObject
 {
 public:
-	CObjectTempl():m_obj(NULL)				{}
-	CObjectTempl(T_GitObj* obj):m_obj(obj)	{}
-	virtual ~CObjectTempl()					{ Close(); }
-
-	void		Attach(T_GitObj* obj)		{ Close(); m_obj = obj; }
-	void		Close()						{ if(!IsValid()) return; CloseFunc(m_obj); m_obj = NULL; }
-	bool		IsValid() const				{ return m_obj != NULL; }
-	void		CheckValid() const			{ if(!IsValid()) throw std::runtime_error("Object not valid"); }
-	T_GitObj*	Obj() const					{ CheckValid(); return m_obj; }
-
-private:
-	CObjectTempl(const CObjectTempl&);
-	CObjectTempl& operator=(const CObjectTempl&);
-
-protected:
-	T_GitObj* m_obj;
+	CObjectTempl(){}
+	CObjectTempl(T_GitObj* obj):CLibGitObjWrapper(obj){}
 };
-
 
 class CRawObject : public CObjectTempl<git_odb_object, &git_odb_object_close>
 {
@@ -149,7 +160,7 @@ private:
 	git_odb* m_odb;
 };
 
-class CRepo
+class CRepo : public CLibGitObjWrapper<git_repository, &git_repository_free>
 {
 public:
 	CRepo(const wchar_t* P_szPathPtr);
@@ -169,9 +180,23 @@ private:
 	CRepo(const CRepo&); //Non copyable
 	CRepo& operator=(const CRepo&);
 
-	git_repository* m_pRepo;
 };
 
+class CCommitWalker : public CLibGitObjWrapper<git_revwalk, &git_revwalk_free>
+{
+public:
+	CCommitWalker();
+	CCommitWalker(CRepo& repo);
+
+	void Init(CRepo& repo);
+
+	virtual ~CCommitWalker();
+
+private:
+	CCommitWalker(const CCommitWalker&); //Non copyable
+	CCommitWalker& operator=(const CCommitWalker&);
+
+};
 
 }
 
