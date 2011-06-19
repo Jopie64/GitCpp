@@ -42,6 +42,14 @@ int _tmain(int argc, _TCHAR* argv[])
 	cout << "Msg: " << W_Commit.Message() << endl;
 	cout << "ShortMsg: " << W_Commit.MessageShort() << endl;
 	cout << "Author: " << W_Commit.Author()->name << endl;
+
+	Git::CCommitWalker W_Walk(repoTest);
+	W_Walk.AddRev(someCommitOid);
+	int count = 0;
+	for(;W_Walk;++W_Walk)
+	{
+		cout << "Commit " << ++count << ": " << Git::CCommit(repoTest, *W_Walk).MessageShort() << endl;
+	}
 	/*
 //	Git::CRef ref = repoTest.GetRef(L"HEAD");
 	Git::CRef ref = repoTest.GetRef(L"refs/heads/test");

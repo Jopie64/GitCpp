@@ -8,6 +8,8 @@
 namespace Git
 {
 
+class CRepo;
+
 class CGitException : public std::runtime_error
 {
 public:
@@ -75,7 +77,7 @@ class COid
 {
 friend std::ostream& operator<<(std::ostream& str, const COid& oid);
 friend class COdb;
-friend class CRepo;
+friend CRepo;
 
 public:
 	COid();
@@ -84,6 +86,8 @@ public:
 
 	static COid FromHexString(const char* hexStr);
 	COid& operator=(const char* hexStr);
+	git_oid& GetInternalObj(){ return  m_oid; }
+	const git_oid& GetInternalObj() const { return  m_oid; }
 private:
 	git_oid m_oid;
 };
@@ -135,6 +139,7 @@ class CCommit : public CObjectTempl<git_commit, &CloseWithObjectClose<git_commit
 public:
 	CCommit();
 	CCommit(git_commit* obj);
+	CCommit(CRepo& repo, const COid& oid);
 	virtual ~CCommit();
 
 	std::string				Message() const;
@@ -189,6 +194,21 @@ public:
 	CCommitWalker(CRepo& repo);
 
 	void Init(CRepo& repo);
+	void Sort(unsigned int sort);
+	void Reset();
+
+	void AddRev(const COid& oid);
+
+	bool End() const;
+
+	void Next();
+
+	COid Curr() const;
+
+	operator T_IsValidFuncPtr () const { return IsValid() && !End() ? &CLibGitObjWrapper::IsValid : NULL; }
+	CCommitWalker& operator ++() { Next(); return *this; }
+	COid operator*() const { return Curr(); }
+
 
 	virtual ~CCommitWalker();
 
@@ -196,7 +216,12 @@ private:
 	CCommitWalker(const CCommitWalker&); //Non copyable
 	CCommitWalker& operator=(const CCommitWalker&);
 
+	bool m_nextCalled;
+	bool m_end;
+	COid m_curr;
+
 };
+
 
 }
 

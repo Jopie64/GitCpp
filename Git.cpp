@@ -174,6 +174,12 @@ CCommit::CCommit(git_commit* obj)
 {
 }
 
+CCommit::CCommit(CRepo& repo, const COid& oid)
+{
+	repo.Read(*this, oid);
+}
+
+
 CCommit::~CCommit(){}
 
 std::string CCommit::Message() const
@@ -347,12 +353,18 @@ COdb CRepo::Odb()
 
 
 CCommitWalker::CCommitWalker()
+:	m_nextCalled(false)
 {
 }
 
 CCommitWalker::CCommitWalker(CRepo& repo)
+:	m_nextCalled(false)
 {
 	Init(repo);
+}
+
+CCommitWalker::~CCommitWalker()
+{
 }
 
 void CCommitWalker::Init(CRepo& repo)
@@ -360,10 +372,58 @@ void CCommitWalker::Init(CRepo& repo)
 	git_revwalk* walker;
 	ThrowIfError(git_revwalk_new(&walker, repo.GetInternalObj()), "git_revwalk_new()");
 	Attach(walker);
+	m_nextCalled = false;
 }
 
-CCommitWalker::~CCommitWalker()
+void CCommitWalker::AddRev(const COid& oid)
 {
+	ThrowIfError(git_revwalk_push(GetInternalObj(), &oid.GetInternalObj()), "git_revwalk_push()");
+	m_nextCalled = false; //git_revwalk_push() resets the walker
+}
+
+
+void CCommitWalker::Sort(unsigned int sort)
+{
+	git_revwalk_sorting(GetInternalObj(), sort);
+}
+
+void CCommitWalker::Reset()
+{
+	git_revwalk_reset(GetInternalObj());
+	m_nextCalled = false; //git_revwalk_push() resets the walker
+}
+
+bool CCommitWalker::End() const
+{
+	if(!m_nextCalled)
+		Curr(); //Next will now be called. This will eventually set m_end when the list is empty.
+	return m_end;
+}
+
+void CCommitWalker::Next()
+{
+	git_oid oid;
+	m_end = false;
+	int error;
+	switch(error = git_revwalk_next(&oid, GetInternalObj()))
+	{
+	case GIT_SUCCESS: m_end = false; break;
+	case GIT_EREVWALKOVER: m_end = true; break;
+	default:
+		ThrowIfError(error, "git_revwalk_next()");
+	}
+
+	m_curr			= oid;
+	m_nextCalled	= true;
+}
+
+COid CCommitWalker::Curr() const
+{
+	if(!m_nextCalled)
+		const_cast<CCommitWalker*>(this)->Next();
+	if(!*this)
+		throw std::runtime_error("Commit walker was already at end when Curr() was called, or it was not initialized.");
+	return m_curr;
 }
 
 
