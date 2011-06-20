@@ -367,6 +367,12 @@ COdb CRepo::Odb()
 	return git_repository_database(GetInternalObj());
 }
 
+bool CRepo::IsBare()const
+{
+	CheckValid();
+	return git_repository_is_bare(GetInternalObj()) ? true : false;
+}
+
 
 CCommitWalker::CCommitWalker()
 :	m_nextCalled(false)

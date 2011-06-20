@@ -184,6 +184,8 @@ public:
 	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	COdb			Odb();
 
+	bool			IsBare()const;
+
 private:
 	CRepo(const CRepo&); //Non copyable
 	CRepo& operator=(const CRepo&);
