@@ -45,10 +45,18 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	Git::CCommitWalker W_Walk(repoTest);
 	W_Walk.AddRev(someCommitOid);
+	W_Walk.Sort(GIT_SORT_TOPOLOGICAL);// | GIT_SORT_REVERSE);
 	int count = 0;
 	for(;W_Walk;++W_Walk)
 	{
-		cout << "Commit " << ++count << ": " << Git::CCommit(repoTest, *W_Walk).MessageShort() << endl;
+		try
+		{
+			cout << "Commit " << ++count << ": " << Git::CCommit(repoTest, *W_Walk).MessageShort() << endl;
+		}
+		catch(std::exception e)
+		{
+			cout << "*** Oops: " << e.what() << endl;
+		}
 	}
 	/*
 //	Git::CRef ref = repoTest.GetRef(L"HEAD");
