@@ -47,32 +47,6 @@ protected:
 
 bool IsGitDir(const wchar_t* path);
 
-class CRef
-{
-public:
-	CRef();
-	CRef(const char* refHash);
-	CRef(const std::string& refHash);
-
-	void Set(const char* refHash);
-	void Set(const std::string& refHash);
-
-	bool IsSymbolic() const;
-	bool IsValid() const;
-
-	const std::string& Hash() const;
-
-private:
-
-	std::string m_Hash;
-};
-
-
-typedef std::map<std::string, CRef> MapRef;
-
-std::ostream& operator<<(std::ostream& str, const CRef& ref);
-
-
 class COid
 {
 friend std::ostream& operator<<(std::ostream& str, const COid& oid);
@@ -174,11 +148,6 @@ public:
 
 	static std::wstring	DiscoverPath(const wchar_t* startPath, bool acrossFs = false, const wchar_t* ceilingDirs = NULL);
 
-	CRef			GetRef(const wchar_t* refName);
-	void			LoadPackedRefs(MapRef& refMap);
-	void			LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL);
-	void			LoadRefs(MapRef& refMap);
-	void			EnsureNotSymbolic(CRef& ref);
 	void			Read(CCommit& obj,		const COid& oid);
 	std::wstring	GetWPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;
