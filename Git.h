@@ -23,15 +23,15 @@ template<class T_GitObj, void (*CloseFunc)(T_GitObj*) >
 class CLibGitObjWrapper
 {
 public:
-	CLibGitObjWrapper():m_obj(NULL)				{}
-	CLibGitObjWrapper(T_GitObj* obj):m_obj(obj)	{}
-	virtual ~CLibGitObjWrapper()				{ Close(); }
+	CLibGitObjWrapper():m_obj(NULL), m_isOwner(false)			{}
+	CLibGitObjWrapper(T_GitObj* obj, bool makeOwner = true):m_obj(obj), m_isOwner(makeOwner)	{}
+	virtual ~CLibGitObjWrapper()								{ Close(); }
 
-	void		Attach(T_GitObj* obj)			{ Close(); m_obj = obj; }
-	void		Close()							{ if(!IsValid()) return; CloseFunc(m_obj); m_obj = NULL; }
-	bool		IsValid() const					{ return m_obj != NULL; }
-	void		CheckValid() const				{ if(!IsValid()) throw std::runtime_error("libgit object not valid"); }
-	T_GitObj*	GetInternalObj() const			{ CheckValid(); return m_obj; }
+	void		Attach(T_GitObj* obj, bool makeOwner = true)	{ Close(); m_obj = obj; m_isOwner = makeOwner; }
+	void		Close()											{ if(!IsValid()) return; if(m_isOwner && CloseFunc) CloseFunc(m_obj); m_obj = NULL; m_isOwner = false; }
+	bool		IsValid() const									{ return m_obj != NULL; }
+	void		CheckValid() const								{ if(!IsValid()) throw std::runtime_error("libgit object not valid"); }
+	T_GitObj*	GetInternalObj() const							{ CheckValid(); return m_obj; }
 
 	typedef bool (CLibGitObjWrapper::*T_IsValidFuncPtr)() const;
 	operator T_IsValidFuncPtr () const {return IsValid() ? &CLibGitObjWrapper::IsValid : NULL;}
@@ -41,7 +41,8 @@ private:
 	CLibGitObjWrapper& operator=(const CLibGitObjWrapper&);
 
 protected:
-	T_GitObj* m_obj;
+	T_GitObj*	m_obj;
+	bool		m_isOwner;
 };
 
 
@@ -66,6 +67,21 @@ private:
 	git_oid m_oid;
 };
 
+class CRef : public CLibGitObjWrapper<git_reference, NULL>
+{
+public:
+	CRef(){}
+	CRef(git_reference* ref):CLibGitObjWrapper(ref, false){}
+	CRef(CRepo& repo, const char* name);
+	CRef(const CRef& ref):CLibGitObjWrapper(ref.GetInternalObj(), false){} //Is copyable because pointer is owned by the repo.
+	CRef& operator=(const CRef& ref){ Attach(ref.GetInternalObj(), false); return *this; }
+
+	std::string Name() const ;
+	COid		Oid(bool forceResolve = false) const ;
+	bool		IsSymbolic() const;
+	void		Resolve();
+
+};
 
 std::ostream& operator<<(std::ostream& str, const COid& oid);
 

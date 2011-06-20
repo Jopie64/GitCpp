@@ -70,6 +70,48 @@ std::ostream& operator<<(std::ostream& str, const COid& oid)
 	return str;
 }
 
+std::string CRef::Name() const
+{
+	CheckValid(); 
+	return git_reference_name(GetInternalObj());
+}
+
+COid CRef::Oid(bool forceResolve) const
+{
+	CheckValid();
+	CRef refToUse(*this);
+	if(forceResolve)
+		refToUse.Resolve();
+
+	const git_oid* oid = git_reference_oid(refToUse.GetInternalObj());
+	if(oid == NULL)
+		throw std::runtime_error("Reference does not point to a oid. Probably a symbolic ref.");
+	return *oid;
+}
+
+CRef::CRef(CRepo& repo, const char* name)
+{
+	git_reference* ref = NULL;
+	ThrowIfError(git_reference_lookup(&ref, repo.GetInternalObj(), name), "git_reference_lookup()");
+	Attach(ref);
+}
+
+bool CRef::IsSymbolic() const
+{
+	CheckValid();
+	return git_reference_type(GetInternalObj()) == GIT_REF_SYMBOLIC;
+}
+
+void CRef::Resolve()
+{
+	CheckValid();
+	git_reference* ref = NULL;
+	ThrowIfError(git_reference_resolve(&ref, GetInternalObj()), "git_reference_resolve()");
+	Attach(ref, false);
+}
+
+
+
 COdb::COdb(git_odb* odb)
 :	m_odb(odb)
 {

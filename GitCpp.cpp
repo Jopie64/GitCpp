@@ -15,8 +15,9 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	try
 	{
-		Git::COid someCommitOid = "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759";
+		//Git::COid someCommitOid = "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759";
 		Git::CRepo repoTest(Git::CRepo::DiscoverPath(L"d:/develop/tortoisegit2/src").c_str());
+		Git::COid someCommitOid = Git::CRef(repoTest, "HEAD").Oid(true);
 
 	cout << repoTest.GetPath() << " is " << (repoTest.IsBare() ? "" : "not ") << "bare." << endl;
 
