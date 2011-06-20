@@ -16,7 +16,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	try
 	{
 		Git::COid someCommitOid = "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759";
-		Git::CRepo repoTest(L"d:/develop/tortoisegit2/.git");
+		Git::CRepo repoTest(Git::CRepo::DiscoverPath(L"d:/develop/tortoisegit2/src").c_str());
 
 	cout << repoTest.GetPath() << endl;
 
@@ -51,7 +51,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		try
 		{
-			cout << "Commit " << ++count << ": " << Git::CCommit(repoTest, *W_Walk).MessageShort() << endl;
+			++count;
+			if(count % 100 == 1)
+				cout << "Commit " << count << ": " << Git::CCommit(repoTest, *W_Walk).MessageShort() << endl;
 		}
 		catch(std::exception& e)
 		{
@@ -66,6 +68,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			}
 		}
 	}
+	cout << "Done. " << count << " revisions." << endl;
 	/*
 //	Git::CRef ref = repoTest.GetRef(L"HEAD");
 	Git::CRef ref = repoTest.GetRef(L"refs/heads/test");

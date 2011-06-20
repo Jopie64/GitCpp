@@ -172,6 +172,8 @@ public:
 	CRepo(const wchar_t* P_szPathPtr);
 	virtual ~CRepo();
 
+	static std::wstring	DiscoverPath(const wchar_t* startPath, bool acrossFs = false, const wchar_t* ceilingDirs = NULL);
+
 	CRef			GetRef(const wchar_t* refName);
 	void			LoadPackedRefs(MapRef& refMap);
 	void			LoadFileRefs(MapRef& refMap, const wchar_t* subPath = NULL);

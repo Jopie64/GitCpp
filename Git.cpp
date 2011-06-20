@@ -258,6 +258,17 @@ std::string CRepo::GetPath(git_repository_pathid id) const
 	return pRet;
 }
 
+std::wstring CRepo::DiscoverPath(const wchar_t* startPath, bool acrossFs, const wchar_t* ceilingDirs)
+{
+	char result[MAX_PATH];result[sizeof(result) - 1] = '\0';
+	ThrowIfError(git_repository_discover(
+						result, sizeof(result) - 1,
+						JStd::String::ToMult(startPath, CP_UTF8).c_str(),
+						acrossFs ? 1 : 0,
+						JStd::String::ToMult(ceilingDirs == NULL ? L"" : ceilingDirs, CP_UTF8).c_str()),
+				 "git_repository_discover()");
+	return JStd::String::ToWide(result, CP_UTF8);
+}
 
 CRef CRepo::GetRef(const wchar_t* refName)
 {
