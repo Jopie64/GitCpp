@@ -128,6 +128,11 @@ CRawObject::CRawObject(git_odb_object* obj)
 }
 
 
+CRawObject::CRawObject(CRepo& repo, const COid& oid)
+{
+	repo.Odb().Read(*this, oid);
+}
+
 CRawObject::CRawObject()
 {
 }

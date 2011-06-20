@@ -53,9 +53,17 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			cout << "Commit " << ++count << ": " << Git::CCommit(repoTest, *W_Walk).MessageShort() << endl;
 		}
-		catch(std::exception e)
+		catch(std::exception& e)
 		{
-			cout << "*** Oops: " << e.what() << endl;
+			try
+			{
+				cout << "Commit " << count << " has a problem: " << e.what() << endl
+					 << "Raw content: " << Git::CRawObject(repoTest, *W_Walk) << endl;
+			}
+			catch(std::exception& e)
+			{
+				cout << "*** Oops: " << e.what() << endl;
+			}
 		}
 	}
 	/*

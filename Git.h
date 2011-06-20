@@ -126,6 +126,7 @@ class CRawObject : public CObjectTempl<git_odb_object, &git_odb_object_close>
 public:
 	CRawObject();
 	CRawObject(git_odb_object* obj);
+	CRawObject(CRepo& repo, const COid& oid);
 
 	const char* Data() const;
 	size_t		Size() const;
