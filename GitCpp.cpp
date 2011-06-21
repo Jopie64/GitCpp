@@ -16,7 +16,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	try
 	{
 		//Git::COid someCommitOid = "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759";
-		Git::CRepo repoTest(Git::CRepo::DiscoverPath(L"d:/develop/tortoisegit2/src").c_str());
+		Git::CRepo repoTest(Git::CRepo::DiscoverPath(L"d:/develop/wine").c_str());
 		Git::COid someCommitOid = Git::CRef(repoTest, "HEAD").Oid(true);
 
 	cout << repoTest.GetPath() << " is " << (repoTest.IsBare() ? "" : "not ") << "bare." << endl;
@@ -46,14 +46,14 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	Git::CCommitWalker W_Walk(repoTest);
 	W_Walk.AddRev(someCommitOid);
-	W_Walk.Sort(GIT_SORT_TOPOLOGICAL);// | GIT_SORT_REVERSE);
+	//W_Walk.Sort(GIT_SORT_TOPOLOGICAL);// | GIT_SORT_REVERSE);
 	int count = 0;
 	for(;W_Walk;++W_Walk)
 	{
 		try
 		{
-			++count;
-			if(count % 100 == 1)
+			++count;Git::CCommit(repoTest, *W_Walk).MessageShort();
+			if(count % 1000 == 1)
 				cout << "Commit " << count << ": " << Git::CCommit(repoTest, *W_Walk).MessageShort() << endl;
 		}
 		catch(std::exception& e)
