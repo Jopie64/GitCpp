@@ -295,12 +295,48 @@ bool CRepo::IsBare()const
 int addRef(const char* name, void* refs)
 {
 	((StringVector*)refs)->push_back(name);
-	return 0;
+	return GIT_SUCCESS;
 }
 
 void CRepo::GetReferences(StringVector& refs, unsigned int flags) const
 {
 	ThrowIfError(git_reference_foreach(GetInternalObj(), flags, &addRef, &refs), "git_reference_foreach()");
+}
+
+void CRepo::ForEachRef(const T_forEachRefCallback& callback, unsigned int flags) const
+{
+	struct CCtxt
+	{
+		CCtxt(const T_forEachRefCallback& callback):m_exceptionThrown(false), m_callback(callback){}
+
+		const T_forEachRefCallback&	m_callback;
+		std::string					m_exception;
+		bool						m_exceptionThrown;
+
+		static int Call(const char* ref, void* vthis)
+		{
+			CCtxt* _this = (CCtxt*)vthis;
+			try
+			{
+				_this->m_callback(ref);
+			}
+			catch(std::exception& e)
+			{
+				_this->m_exception = e.what();
+				_this->m_exceptionThrown = true;
+				//Cannot rethrow here... it needs to fall through the c stack.
+				//Will be thrown later, but exception is always from type std::exception.
+				//It is not possible to template the catch handler to later rethrow the same exception as what was catched here.
+				return GIT_ERROR;
+			}
+			return GIT_SUCCESS;
+		}
+	} ctxt(callback);
+
+	int error = git_reference_foreach(GetInternalObj(), flags, &CCtxt::Call, &ctxt);
+	if(ctxt.m_exceptionThrown)
+		throw std::exception(ctxt.m_exception.c_str()); //rethrow exception caught from callback
+	ThrowIfError(error, "git_reference_foreach()");
 }
 
 

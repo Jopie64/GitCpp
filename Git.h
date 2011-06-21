@@ -4,6 +4,7 @@
 #include <iostream>
 #include "jstd/Sha1.h"
 #include "git2.h"
+#include <functional>
 
 namespace Git
 {
@@ -158,6 +159,7 @@ private:
 	git_odb* m_odb;
 };
 
+typedef std::tr1::function<void (const char*)> T_forEachRefCallback;
 class CRepo : public CLibGitObjWrapper<git_repository, &git_repository_free>
 {
 public:
@@ -174,6 +176,7 @@ public:
 	bool			IsBare()const;
 
 	void			GetReferences(StringVector& refs, unsigned int flags) const;
+	void			ForEachRef(const T_forEachRefCallback& callback, unsigned int flags) const;
 
 private:
 	CRepo(const CRepo&); //Non copyable

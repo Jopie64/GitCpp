@@ -11,6 +11,14 @@
 
 using namespace std;
 
+void ShowRef(Git::CRepo& repo, const char* ref, bool doError)
+{
+	//Git::CRef(repoTest, i->c_str()).Oid(true);
+	cout << "- " << ref << " --> " << Git::CRef(repo, ref).Oid(true) << endl;
+	if(doError)
+		throw std::runtime_error("An error. Lets stop.");
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	try
@@ -22,15 +30,20 @@ int _tmain(int argc, _TCHAR* argv[])
 	cout << repoTest.GetPath() << " is " << (repoTest.IsBare() ? "" : "not ") << "bare." << endl;
 
 	cout << "References: " << endl;
+	//Method 1
 	Git::StringVector refs;
 	repoTest.GetReferences(refs, GIT_REF_LISTALL);
 	for(Git::StringVector::iterator i = refs.begin(); i != refs.end(); ++i)
-	{
-		Git::CRef(repoTest, i->c_str()).Oid(true);
-		//cout << "- " << *i << " --> " << Git::CRef(repoTest, i->c_str()).Oid(true) << endl;
-	}
-	cout << "Thats all..." << endl;
+		ShowRef(repoTest, i->c_str(), false);
+
 	char c;
+	cin >> c;
+
+	//Method 2
+	cout << "Method 2... " << endl;
+	repoTest.ForEachRef(std::tr1::bind(&ShowRef, std::tr1::ref(repoTest), std::tr1::placeholders::_1, false), GIT_REF_LISTALL);
+
+	cout << "Thats all..." << endl;
 	cin >> c;
 
 	cout << "Do the test" << endl;
