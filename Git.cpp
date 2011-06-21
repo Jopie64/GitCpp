@@ -292,6 +292,18 @@ bool CRepo::IsBare()const
 	return git_repository_is_bare(GetInternalObj()) ? true : false;
 }
 
+int addRef(const char* name, void* refs)
+{
+	((StringVector*)refs)->push_back(name);
+	return 0;
+}
+
+void CRepo::GetReferences(StringVector& refs, unsigned int flags) const
+{
+	ThrowIfError(git_reference_foreach(GetInternalObj(), flags, &addRef, &refs), "git_reference_foreach()");
+}
+
+
 
 CCommitWalker::CCommitWalker()
 :	m_nextCalled(false)

@@ -21,10 +21,19 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	cout << repoTest.GetPath() << " is " << (repoTest.IsBare() ? "" : "not ") << "bare." << endl;
 
-	Git::COdb W_Odb1 = repoTest.Odb();
-	Git::COdb W_Odb2 = repoTest.Odb();
+	cout << "References: " << endl;
+	Git::StringVector refs;
+	repoTest.GetReferences(refs, GIT_REF_LISTALL);
+	for(Git::StringVector::iterator i = refs.begin(); i != refs.end(); ++i)
+	{
+		Git::CRef(repoTest, i->c_str()).Oid(true);
+		//cout << "- " << *i << " --> " << Git::CRef(repoTest, i->c_str()).Oid(true) << endl;
+	}
+	cout << "Thats all..." << endl;
+	char c;
+	cin >> c;
 
-	cout << "Doe de test" << endl;
+	cout << "Do the test" << endl;
 
 	Git::CRawObject W_Obj;
 	repoTest.Odb().Read(W_Obj, someCommitOid);

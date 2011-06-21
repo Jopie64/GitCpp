@@ -1,5 +1,5 @@
 #pragma once
-#include <map>
+#include <vector>
 #include <string>
 #include <iostream>
 #include "jstd/Sha1.h"
@@ -9,6 +9,8 @@ namespace Git
 {
 
 class CRepo;
+
+typedef std::vector<std::string> StringVector;
 
 class CGitException : public std::runtime_error
 {
@@ -170,6 +172,8 @@ public:
 	COdb			Odb();
 
 	bool			IsBare()const;
+
+	void			GetReferences(StringVector& refs, unsigned int flags) const;
 
 private:
 	CRepo(const CRepo&); //Non copyable
