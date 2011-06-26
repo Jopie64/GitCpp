@@ -218,6 +218,16 @@ COid CCommit::Tree() const
 }
 
 
+CTree::CTree()
+{
+}
+
+CTree::CTree(CRepo& repo, const COid& oid)
+{
+	repo.Read(*this, oid);
+}
+
+
 void COdb::Read(CRawObject& obj, const COid& oid)
 {
 	git_odb_object* pobj = NULL;
@@ -296,6 +306,15 @@ void CRepo::Read(CCommit& obj, const COid& oid)
 	ThrowIfError(git_commit_lookup(&pobj, GetInternalObj(), &oid.m_oid), "git_commit_lookup()");
 	obj.Attach(pobj);
 }
+
+void CRepo::Read(CTree& obj, const COid& oid)
+{
+	git_tree* pobj = NULL;
+	ThrowIfError(git_tree_lookup(&pobj, GetInternalObj(), &oid.m_oid), "git_tree_lookup()");
+	obj.Attach(pobj);
+}
+
+
 
 
 COdb CRepo::Odb()

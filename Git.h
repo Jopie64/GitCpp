@@ -128,6 +128,8 @@ public:
 
 };
 
+std::ostream& operator<<(std::ostream& P_os, const CRawObject& P_Obj);
+
 class CCommit : public CObjectTempl<git_commit, &CloseWithObjectClose<git_commit> >
 {
 public:
@@ -144,7 +146,13 @@ public:
 	COid					Tree() const;
 };
 
-std::ostream& operator<<(std::ostream& P_os, const CRawObject& P_Obj);
+class CTree : public CObjectTempl<git_tree, &CloseWithObjectClose<git_tree> >
+{
+public:
+	CTree();
+	CTree(CRepo& repo, const COid& oid);
+
+};
 
 class COdb
 {
@@ -173,6 +181,7 @@ public:
 	static std::wstring	DiscoverPath(const wchar_t* startPath, bool acrossFs = false, const wchar_t* ceilingDirs = NULL);
 
 	void			Read(CCommit& obj,		const COid& oid);
+	void			Read(CTree& obj,		const COid& oid);
 	std::wstring	GetWPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	COdb			Odb();
