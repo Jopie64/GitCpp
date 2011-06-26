@@ -163,8 +163,12 @@ typedef std::tr1::function<void (const char*)> T_forEachRefCallback;
 class CRepo : public CLibGitObjWrapper<git_repository, &git_repository_free>
 {
 public:
-	CRepo(const wchar_t* P_szPathPtr);
+	CRepo();
+	CRepo(const wchar_t* path);
 	virtual ~CRepo();
+
+	void			Open(const wchar_t* path);
+	void			Create(const wchar_t* path, bool isBare);
 
 	static std::wstring	DiscoverPath(const wchar_t* startPath, bool acrossFs = false, const wchar_t* ceilingDirs = NULL);
 

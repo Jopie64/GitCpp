@@ -232,12 +232,29 @@ COid COdb::Write(const CObjType& ot, const void* data, size_t size)
 	return ret;
 }
 
+CRepo::CRepo()
+{
+}
+
 CRepo::CRepo(const wchar_t* path)
+{
+	Open(path);
+}
+
+void CRepo::Open(const wchar_t* path)
 {
 	git_repository* repo = NULL;
 	ThrowIfError(git_repository_open(&repo, JStd::String::ToMult(path, CP_UTF8).c_str()), "git_repository_open()");
 	Attach(repo);
 }
+
+void CRepo::Create(const wchar_t* path, bool isBare)
+{
+	git_repository* repo = NULL;
+	ThrowIfError(git_repository_init(&repo, JStd::String::ToMult(path, CP_UTF8).c_str(), isBare ? 1 : 0), "git_repository_init()");
+	Attach(repo);
+}
+
 
 CRepo::~CRepo()
 {
