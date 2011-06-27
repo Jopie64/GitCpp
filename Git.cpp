@@ -111,6 +111,16 @@ void CRef::Resolve()
 }
 
 
+CSignature::CSignature(const char* name, const char* email)
+{
+	Attach(git_signature_now(name, email));
+}
+
+CSignature::CSignature(const char* name, const char* email, git_time_t time, int offset)
+{
+	Attach(git_signature_new(name, email, time, offset));
+}
+
 
 COdb::COdb(git_odb* odb)
 :	m_odb(odb)
@@ -414,6 +424,24 @@ void CRepo::ForEachRef(const T_forEachRefCallback& callback, unsigned int flags)
 	ThrowIfError(error, "git_reference_foreach()");
 }
 
+COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents)
+{
+	std::vector<const git_oid*> parentIds(parents.size());
+	for(COids::const_iterator i = parents.begin(); i != parents.end(); ++i)
+		parentIds.push_back(&i->GetInternalObj());
+	COid ret;
+	ThrowIfError(git_commit_create(&ret.GetInternalObj(),
+									GetInternalObj(),
+									updateRef,
+									author.GetInternalObj(),
+									committer.GetInternalObj(),
+									msg,
+								   &tree.GetInternalObj(),
+								    parentIds.size(),
+								   &*parentIds.begin()),
+				 "git_commit_create()");
+	return ret;
+}
 
 
 CCommitWalker::CCommitWalker()

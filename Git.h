@@ -82,6 +82,10 @@ private:
 	git_oid m_oid;
 };
 
+typedef std::vector<COid> COids;
+
+std::ostream& operator<<(std::ostream& str, const COid& oid);
+
 class CRef : public CLibGitCopyableObjWrapper<git_reference>//Is copyable because pointer is owned by the repo.
 {
 public:
@@ -96,7 +100,13 @@ public:
 
 };
 
-std::ostream& operator<<(std::ostream& str, const COid& oid);
+class CSignature : public CLibGitObjWrapper<git_signature, &git_signature_free>
+{
+public:
+	CSignature(const char* name, const char* email);
+	CSignature(const char* name, const char* email, git_time_t time, int offset);
+};
+
 
 class CObjType
 {
@@ -218,6 +228,7 @@ public:
 	void			GetReferences(StringVector& refs, unsigned int flags) const;
 	void			ForEachRef(const T_forEachRefCallback& callback, unsigned int flags) const;
 
+	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents);
 private:
 	CRepo(const CRepo&); //Non copyable
 	CRepo& operator=(const CRepo&);
