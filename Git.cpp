@@ -107,7 +107,7 @@ void CRef::Resolve()
 	CheckValid();
 	git_reference* ref = NULL;
 	ThrowIfError(git_reference_resolve(&ref, GetInternalObj()), "git_reference_resolve()");
-	Attach(ref, false);
+	Attach(ref);
 }
 
 
@@ -218,6 +218,16 @@ COid CCommit::Tree() const
 }
 
 
+CTreeEntry::CTreeEntry()
+{
+}
+
+CTreeEntry::CTreeEntry(git_tree_entry* entry)
+:	CLibGitCopyableObjWrapper(entry)
+{
+}
+
+
 CTree::CTree()
 {
 }
@@ -226,6 +236,35 @@ CTree::CTree(CRepo& repo, const COid& oid)
 {
 	repo.Read(*this, oid);
 }
+
+
+
+CTreeBuilder::CTreeBuilder()
+{
+	git_treebuilder* builder = NULL;
+	ThrowIfError(git_treebuilder_create(&builder, NULL), "git_treebuilder_create");
+	Attach(builder);
+}
+
+CTreeBuilder::CTreeBuilder(const CTree& source)
+{
+	git_treebuilder* builder = NULL;
+	ThrowIfError(git_treebuilder_create(&builder, source.GetInternalObj()), "git_treebuilder_create");
+	Attach(builder);
+}
+
+void CTreeBuilder::Clear()
+{
+	git_treebuilder_clear(GetInternalObj());
+}
+
+CTreeEntry CTreeBuilder::Insert(const wchar_t* filename, const COid& id, unsigned int attributes)
+{
+	git_tree_entry* entry = NULL;
+	ThrowIfError(git_treebuilder_insert(&entry, GetInternalObj(), JStd::String::ToMult(filename, CP_UTF8).c_str(), &id.GetInternalObj(), attributes), "git_treebuilder_insert()");
+	return CTreeEntry(entry);
+}
+
 
 
 void COdb::Read(CRawObject& obj, const COid& oid)

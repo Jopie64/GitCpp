@@ -48,6 +48,18 @@ protected:
 	bool		m_isOwner;
 };
 
+template<class T_GitObj>
+class CLibGitCopyableObjWrapper : public CLibGitObjWrapper<T_GitObj, NULL>
+{
+public:
+	CLibGitCopyableObjWrapper(){}
+	CLibGitCopyableObjWrapper(T_GitObj* obj):CLibGitObjWrapper(obj, false){}
+
+	CLibGitCopyableObjWrapper(const CLibGitCopyableObjWrapper& obj):CLibGitObjWrapper(obj.GetInternalObj(), false){}
+	CLibGitCopyableObjWrapper& operator=(const CLibGitCopyableObjWrapper& obj){ Attach(obj.GetInternalObj(), false); return *this; }
+
+	void		Attach(T_GitObj* obj){ CLibGitObjWrapper::Attach(obj, false); }
+};
 
 bool IsGitDir(const wchar_t* path);
 
@@ -70,14 +82,12 @@ private:
 	git_oid m_oid;
 };
 
-class CRef : public CLibGitObjWrapper<git_reference, NULL>
+class CRef : public CLibGitCopyableObjWrapper<git_reference>//Is copyable because pointer is owned by the repo.
 {
 public:
 	CRef(){}
-	CRef(git_reference* ref):CLibGitObjWrapper(ref, false){}
+	CRef(git_reference* ref):CLibGitCopyableObjWrapper(ref){}
 	CRef(CRepo& repo, const char* name);
-	CRef(const CRef& ref):CLibGitObjWrapper(ref.GetInternalObj(), false){} //Is copyable because pointer is owned by the repo.
-	CRef& operator=(const CRef& ref){ Attach(ref.GetInternalObj(), false); return *this; }
 
 	std::string Name() const ;
 	COid		Oid(bool forceResolve = false) const ;
@@ -146,12 +156,29 @@ public:
 	COid					Tree() const;
 };
 
+class CTreeEntry : public CLibGitCopyableObjWrapper<git_tree_entry>
+{
+public:
+	CTreeEntry();
+	CTreeEntry(git_tree_entry* entry);
+};
+
 class CTree : public CObjectTempl<git_tree, &CloseWithObjectClose<git_tree> >
 {
 public:
 	CTree();
 	CTree(CRepo& repo, const COid& oid);
 
+};
+
+class CTreeBuilder : public CObjectTempl<git_treebuilder, &git_treebuilder_free>
+{
+public:
+	CTreeBuilder();
+	CTreeBuilder(const CTree& source);
+
+	void		Clear();
+	CTreeEntry	Insert(const wchar_t* filename, const COid& id, unsigned int attributes);
 };
 
 class COdb
