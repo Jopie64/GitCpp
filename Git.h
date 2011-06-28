@@ -219,6 +219,10 @@ public:
 
 	void			Read(CCommit& obj,		const COid& oid);
 	void			Read(CTree& obj,		const COid& oid);
+	COid			WriteBlob(const void* data, size_t size);
+	COid			WriteBlob(const std::string& data);
+	COid			Write(CTreeBuilder& tree);
+
 	std::wstring	GetWPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;
 	COdb			Odb();

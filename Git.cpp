@@ -424,11 +424,36 @@ void CRepo::ForEachRef(const T_forEachRefCallback& callback, unsigned int flags)
 	ThrowIfError(error, "git_reference_foreach()");
 }
 
+COid CRepo::WriteBlob(const void* data, size_t size)
+{
+	return Odb().Write(GIT_OBJ_BLOB, data, size);
+}
+
+COid CRepo::WriteBlob(const std::string& data)
+{
+	return WriteBlob(data.data(), data.size());
+}
+
+COid CRepo::Write(CTreeBuilder& tree)
+{
+	git_oid oid;
+	ThrowIfError(git_treebuilder_write(&oid, GetInternalObj(), tree.GetInternalObj()), "git_treebuilder_write()");
+	return oid;
+}
+
+
+
+
 COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents)
 {
 	std::vector<const git_oid*> parentIds(parents.size());
 	for(COids::const_iterator i = parents.begin(); i != parents.end(); ++i)
 		parentIds.push_back(&i->GetInternalObj());
+
+	const git_oid** parentIdsPtr = NULL;
+	if(!parentIds.empty())
+		parentIdsPtr = &*parentIds.begin();
+
 	COid ret;
 	ThrowIfError(git_commit_create(&ret.GetInternalObj(),
 									GetInternalObj(),
@@ -438,7 +463,7 @@ COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSigna
 									msg,
 								   &tree.GetInternalObj(),
 								    parentIds.size(),
-								   &*parentIds.begin()),
+								    parentIdsPtr),
 				 "git_commit_create()");
 	return ret;
 }
