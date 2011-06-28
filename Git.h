@@ -82,7 +82,20 @@ private:
 	git_oid m_oid;
 };
 
-typedef std::vector<COid> COids;
+class COids
+{
+public:
+	typedef std::vector<COid> VectorCOid;
+
+	COids();
+	COids(const COid& oid);
+
+	COids& Add(const COid& oid);
+	COids& operator<<(const COid& oid);
+
+
+	VectorCOid m_oids;
+};
 
 std::ostream& operator<<(std::ostream& str, const COid& oid);
 
@@ -188,7 +201,7 @@ public:
 	CTreeBuilder(const CTree& source);
 
 	void		Clear();
-	CTreeEntry	Insert(const wchar_t* filename, const COid& id, unsigned int attributes);
+	CTreeEntry	Insert(const wchar_t* filename, const COid& id, unsigned int attributes = 0100644);
 };
 
 class COdb

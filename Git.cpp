@@ -70,6 +70,26 @@ std::ostream& operator<<(std::ostream& str, const COid& oid)
 	return str;
 }
 
+COids::COids()
+{
+}
+
+COids::COids(const COid& oid)
+{
+	Add(oid);
+}
+
+COids& COids::Add(const COid& oid)
+{
+	m_oids.push_back(oid);
+	return *this;
+}
+
+COids& COids::operator<<(const COid& oid)
+{
+	return Add(oid);
+}
+
 std::string CRef::Name() const
 {
 	CheckValid(); 
@@ -446,8 +466,9 @@ COid CRepo::Write(CTreeBuilder& tree)
 
 COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents)
 {
-	std::vector<const git_oid*> parentIds(parents.size());
-	for(COids::const_iterator i = parents.begin(); i != parents.end(); ++i)
+	std::vector<const git_oid*> parentIds;
+	parentIds.reserve(parents.m_oids.size());
+	for(COids::VectorCOid::const_iterator i = parents.m_oids.begin(); i != parents.m_oids.end(); ++i)
 		parentIds.push_back(&i->GetInternalObj());
 
 	const git_oid** parentIdsPtr = NULL;
