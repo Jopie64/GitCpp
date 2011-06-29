@@ -462,18 +462,31 @@ COid CRepo::Write(CTreeBuilder& tree)
 }
 
 
-
-
-COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents)
+VectorCommit CRepo::ToCommits(const COids& oids)
 {
-	std::vector<const git_oid*> parentIds;
-	parentIds.reserve(parents.m_oids.size());
-	for(COids::VectorCOid::const_iterator i = parents.m_oids.begin(); i != parents.m_oids.end(); ++i)
-		parentIds.push_back(&i->GetInternalObj());
+	VectorCommit ret;
+	ret.reserve(oids.m_oids.size());
+	for(COids::VectorCOid::const_iterator i = oids.m_oids.begin(); i != oids.m_oids.end(); ++i)
+		ret.push_back(std::tr1::shared_ptr<CCommit>(new CCommit(*this, *i)));
+	return ret;
+}
 
-	const git_oid** parentIdsPtr = NULL;
-	if(!parentIds.empty())
-		parentIdsPtr = &*parentIds.begin();
+
+COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parentIds)
+{
+	return Commit(updateRef, author, committer, msg, CTree(*this, tree), ToCommits(parentIds));
+}
+
+COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const CTree& tree, const VectorCommit& parents)
+{
+	std::vector<const git_commit*> rawParents;
+	rawParents.reserve(parents.size());
+	for(VectorCommit::const_iterator i = parents.begin(); i != parents.end(); ++i)
+		rawParents.push_back((*i)->GetInternalObj());
+
+	const git_commit** rawParentsPtr = NULL;
+	if(!rawParents.empty())
+		rawParentsPtr = &*rawParents.begin();
 
 	COid ret;
 	ThrowIfError(git_commit_create(&ret.GetInternalObj(),
@@ -482,13 +495,12 @@ COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSigna
 									author.GetInternalObj(),
 									committer.GetInternalObj(),
 									msg,
-								   &tree.GetInternalObj(),
-								    parentIds.size(),
-								    parentIdsPtr),
+								    tree.GetInternalObj(),
+								    rawParents.size(),
+								    rawParentsPtr),
 				 "git_commit_create()");
 	return ret;
 }
-
 
 CCommitWalker::CCommitWalker()
 :	m_nextCalled(false)

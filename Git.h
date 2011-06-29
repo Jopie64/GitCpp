@@ -5,6 +5,7 @@
 #include "jstd/Sha1.h"
 #include "git2.h"
 #include <functional>
+#include <memory>
 
 namespace Git
 {
@@ -81,6 +82,8 @@ public:
 private:
 	git_oid m_oid;
 };
+
+std::ostream& operator<<(std::ostream& str, const COid& oid);
 
 class COids
 {
@@ -179,6 +182,8 @@ public:
 	COid					Tree() const;
 };
 
+typedef std::vector<std::tr1::shared_ptr<CCommit> > VectorCommit;
+
 class CTreeEntry : public CLibGitCopyableObjWrapper<git_tree_entry>
 {
 public:
@@ -245,7 +250,10 @@ public:
 	void			GetReferences(StringVector& refs, unsigned int flags) const;
 	void			ForEachRef(const T_forEachRefCallback& callback, unsigned int flags) const;
 
+	VectorCommit	ToCommits(const COids& oids);
+
 	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents);
+	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const CTree& tree, const VectorCommit& parents);
 private:
 	CRepo(const CRepo&); //Non copyable
 	CRepo& operator=(const CRepo&);
