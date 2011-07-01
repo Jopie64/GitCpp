@@ -79,6 +79,12 @@ public:
 	COid& operator=(const char* hexStr);
 	git_oid& GetInternalObj(){ return  m_oid; }
 	const git_oid& GetInternalObj() const { return  m_oid; }
+
+	int compare(const COid& that) const;
+	bool operator<(const COid& that) const;
+	bool operator==(const COid& that) const;
+
+	bool isNull() const;
 private:
 	git_oid m_oid;
 };
@@ -107,7 +113,7 @@ class CRef : public CLibGitCopyableObjWrapper<git_reference>//Is copyable becaus
 public:
 	CRef(){}
 	CRef(git_reference* ref):CLibGitCopyableObjWrapper(ref){}
-	CRef(CRepo& repo, const char* name);
+	CRef(const CRepo& repo, const char* name);
 
 	std::string Name() const ;
 	COid		Oid(bool forceResolve = false) const ;
@@ -251,6 +257,9 @@ public:
 	void			ForEachRef(const T_forEachRefCallback& callback, unsigned int flags) const;
 
 	VectorCommit	ToCommits(const COids& oids);
+
+	CRef			GetRef(const char* name) const;
+	CRef			MakeRef(const char* name, const COid& oid, bool force = false);
 
 	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents);
 	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const CTree& tree, const VectorCommit& parents);

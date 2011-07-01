@@ -48,6 +48,7 @@ COid COid::FromHexString(const char* hexStr)
 
 COid::COid()
 {
+	memset(&m_oid, 0, sizeof(m_oid));
 }
 
 COid::COid(const char* hexStr)
@@ -59,6 +60,26 @@ COid& COid::operator=(const char* hexStr)
 {
 	*this = FromHexString(hexStr);
 	return *this;
+}
+
+int COid::compare(const COid& that) const
+{
+	return memcmp(&m_oid, &that.m_oid, sizeof(m_oid));
+}
+
+bool COid::operator<(const COid& that) const
+{
+	return compare(that) < 0;
+}
+
+bool COid::operator==(const COid& that) const
+{
+	return compare(that) == 0;
+}
+
+bool COid::isNull() const
+{
+	return compare(COid()) == 0;
 }
 
 
@@ -109,7 +130,7 @@ COid CRef::Oid(bool forceResolve) const
 	return *oid;
 }
 
-CRef::CRef(CRepo& repo, const char* name)
+CRef::CRef(const CRepo& repo, const char* name)
 {
 	git_reference* ref = NULL;
 	ThrowIfError(git_reference_lookup(&ref, repo.GetInternalObj(), name), "git_reference_lookup()");
@@ -469,6 +490,18 @@ VectorCommit CRepo::ToCommits(const COids& oids)
 	for(COids::VectorCOid::const_iterator i = oids.m_oids.begin(); i != oids.m_oids.end(); ++i)
 		ret.push_back(std::tr1::shared_ptr<CCommit>(new CCommit(*this, *i)));
 	return ret;
+}
+
+CRef CRepo::GetRef(const char* name) const
+{
+	return CRef(*this, name);
+}
+
+CRef CRepo::MakeRef(const char* name, const COid& oid, bool force)
+{
+	git_reference* ref = NULL;
+	ThrowIfError(git_reference_create_oid(&ref, GetInternalObj(), name, &oid.GetInternalObj(), force ? 1 : 0), "git_reference_create_oid()");
+	return ref;
 }
 
 
