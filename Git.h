@@ -209,8 +209,10 @@ class CTreeBuilder : public CObjectTempl<git_treebuilder, &git_treebuilder_free>
 {
 public:
 	CTreeBuilder();
+	CTreeBuilder(const CTree* source);
 	CTreeBuilder(const CTree& source);
 
+	void		Reset(const CTree* source = NULL);
 	void		Clear();
 	CTreeEntry	Insert(const wchar_t* filename, const COid& id, unsigned int attributes = 0100644);
 };

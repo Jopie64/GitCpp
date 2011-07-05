@@ -292,15 +292,23 @@ CTree::CTree(CRepo& repo, const COid& oid)
 
 CTreeBuilder::CTreeBuilder()
 {
-	git_treebuilder* builder = NULL;
-	ThrowIfError(git_treebuilder_create(&builder, NULL), "git_treebuilder_create");
-	Attach(builder);
+	Reset();
+}
+
+CTreeBuilder::CTreeBuilder(const CTree* source)
+{
+	Reset(source);
 }
 
 CTreeBuilder::CTreeBuilder(const CTree& source)
 {
+	Reset(&source);
+}
+
+void CTreeBuilder::Reset(const CTree* source)
+{
 	git_treebuilder* builder = NULL;
-	ThrowIfError(git_treebuilder_create(&builder, source.GetInternalObj()), "git_treebuilder_create");
+	ThrowIfError(git_treebuilder_create(&builder, source ? source->GetInternalObj() : NULL), "git_treebuilder_create");
 	Attach(builder);
 }
 
