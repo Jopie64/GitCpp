@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <list>
 #include <string>
 #include <iostream>
 #include "jstd/Sha1.h"
@@ -215,6 +216,28 @@ public:
 	void		Reset(const CTree* source = NULL);
 	void		Clear();
 	CTreeEntry	Insert(const wchar_t* filename, const COid& id, unsigned int attributes = 0100644);
+};
+
+
+class CTreeNode
+{
+public:
+	typedef std::list<CTreeNode> list_t;
+
+	CTreeNode();
+	CTreeNode(const std::string& name);
+	virtual ~CTreeNode();
+
+	CTreeNode*	GetByPath(const char* name);
+	void		Insert(const char* name, COid oid, int attributes = 0100644);
+
+	COid		Write(CRepo& repo);
+	int			GetAttributes()const;
+
+	std::string m_name;
+	COid		m_oid;
+	list_t		m_subTree; //when this one is not empty, its not a leaf
+	int			m_attributes;
 };
 
 class COdb

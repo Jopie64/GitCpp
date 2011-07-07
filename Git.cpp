@@ -326,6 +326,76 @@ CTreeEntry CTreeBuilder::Insert(const wchar_t* filename, const COid& id, unsigne
 
 
 
+
+CTreeNode::CTreeNode()
+:	m_attributes(-1)
+{
+}
+
+CTreeNode::CTreeNode(const std::string& name)
+:	m_attributes(-1), m_name(name)
+{
+}
+
+CTreeNode::~CTreeNode()
+{
+}
+
+CTreeNode* CTreeNode::GetByPath(const char* name)
+{
+	const char* nameStart = name;
+	if(*nameStart == '/')
+		++nameStart;
+	const char* nameEnd = strchr(nameStart, '/');
+	if(nameEnd == NULL)
+		nameEnd = nameStart + strlen(nameStart);
+	if(nameEnd == nameStart)
+		//Empty name. Its this treenode.
+		return this;
+	std::string namePart = std::string(nameStart, nameEnd);
+	list_t::iterator i;
+	for(i = m_subTree.begin(); i != m_subTree.end(); ++i)
+		if(i->m_name == namePart)
+			break;
+	if(i == m_subTree.end())
+		i = m_subTree.insert(m_subTree.end(), namePart);
+	return i->GetByPath(nameEnd);
+}
+
+void CTreeNode::Insert(const char* name, COid oid, int attributes)
+{
+	CTreeNode* node = GetByPath(name);
+	node->m_oid			= oid;
+	node->m_attributes	= attributes;
+}
+
+int CTreeNode::GetAttributes()const
+{
+	if(m_attributes >= 0)
+		return m_attributes;
+	if(m_subTree.empty())
+		return 0100644;
+	return 040000;
+}
+
+COid CTreeNode::Write(CRepo& repo)
+{
+	if(m_subTree.empty())
+		return m_oid;
+	CTreeBuilder treeB;
+	for(list_t::iterator i = m_subTree.begin(); i != m_subTree.end(); ++i)
+	{
+		COid oid = i->Write(repo);
+		if(oid.isNull())
+			continue;
+		treeB.Insert(JStd::String::ToWide(i->m_name, CP_UTF8).c_str(), oid, i->GetAttributes());
+	}
+	return repo.Write(treeB);
+}
+
+
+
+
 void COdb::Read(CRawObject& obj, const COid& oid)
 {
 	git_odb_object* pobj = NULL;
