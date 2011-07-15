@@ -172,11 +172,23 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
+			<File
+				RelativePath=".\libgit2\src\win32\fnmatch.c"
+				>
+			</File>
+			<File
+				RelativePath=".\libgit2\src\win32\posix.c"
+				>
+			</File>
 			<Filter
 				Name="src"
 				>
 				<File
 					RelativePath=".\libgit2\src\blob.c"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\buffer.c"
 					>
 				</File>
 				<File
@@ -224,6 +236,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\src\netops.c"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\object.c"
 					>
 				</File>
@@ -244,11 +260,35 @@
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\src\path.c"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\pkt.c"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\posix.c"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\pqueue.c"
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\src\reflog.c"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\refs.c"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\refspec.c"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\remote.c"
 					>
 				</File>
 				<File
@@ -268,6 +308,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\src\status.c"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\tag.c"
 					>
 				</File>
@@ -276,7 +320,23 @@
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\src\transport.c"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\transport_git.c"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\transport_local.c"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\tree.c"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\tsort.c"
 					>
 				</File>
 				<File
@@ -295,26 +355,6 @@
 						>
 					</File>
 					<File
-						RelativePath=".\libgit2\src\win32\fileops.c"
-						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)\fileops_win32.obj"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								ObjectFile="$(IntDir)\fileops_win32.obj"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
 						RelativePath=".\libgit2\src\win32\map.c"
 						>
 					</File>
@@ -327,7 +367,7 @@
 					Name="sha1"
 					>
 					<File
-						RelativePath=".\libgit2\src\block-sha1\sha1.c"
+						RelativePath=".\libgit2\src\sha1.c"
 						>
 					</File>
 				</Filter>
@@ -375,7 +415,19 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\libgit2\include\git2.h"
+				RelativePath=".\libgit2\src\win32\fnmatch.h"
+				>
+			</File>
+			<File
+				RelativePath=".\libgit2\src\win32\mingw-compat.h"
+				>
+			</File>
+			<File
+				RelativePath=".\libgit2\src\win32\msvc-compat.h"
+				>
+			</File>
+			<File
+				RelativePath=".\libgit2\src\win32\posix.h"
 				>
 			</File>
 			<Filter
@@ -387,6 +439,10 @@
 				</File>
 				<File
 					RelativePath=".\libgit2\src\bswap.h"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\buffer.h"
 					>
 				</File>
 				<File
@@ -426,6 +482,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\include\git2.h"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\hash.h"
 					>
 				</File>
@@ -450,6 +510,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\src\netops.h"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\odb.h"
 					>
 				</File>
@@ -458,11 +522,35 @@
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\src\path.h"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\pkt.h"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\posix.h"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\pqueue.h"
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\src\reflog.h"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\refs.h"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\refspec.h"
+					>
+				</File>
+				<File
+					RelativePath=".\libgit2\src\remote.h"
 					>
 				</File>
 				<File
@@ -490,6 +578,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\libgit2\src\transport.h"
+					>
+				</File>
+				<File
 					RelativePath=".\libgit2\src\tree.h"
 					>
 				</File>
@@ -513,7 +605,7 @@
 					Name="sha1"
 					>
 					<File
-						RelativePath=".\libgit2\src\block-sha1\sha1.h"
+						RelativePath=".\libgit2\src\sha1.h"
 						>
 					</File>
 				</Filter>
