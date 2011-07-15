@@ -3,10 +3,10 @@
 #include <list>
 #include <string>
 #include <iostream>
-#include "jstd/Sha1.h"
-#include "git2.h"
+//#include "jstd/Sha1.h"
 #include <functional>
 #include <memory>
+#include "git2.h"
 
 namespace Git
 {
