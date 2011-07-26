@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="libgit2\include;libgit2\deps\zlib;libgit2\src"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GIT2_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GIT2_EXPORTS;NO_GZIP"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -115,7 +115,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="libgit2\include;libgit2\deps\zlib;libgit2\src"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GIT2_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GIT2_EXPORTS;NO_GZIP"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -369,6 +369,14 @@
 								ObjectFile="$(IntDir)\2"
 							/>
 						</FileConfiguration>
+						<FileConfiguration
+							Name="Release|Win32"
+							>
+							<Tool
+								Name="VCCLCompilerTool"
+								ObjectFile="$(IntDir)\2"
+							/>
+						</FileConfiguration>
 					</File>
 					<File
 						RelativePath=".\libgit2\src\win32\pthread.c"
@@ -384,10 +392,6 @@
 					>
 					<File
 						RelativePath=".\libgit2\deps\zlib\adler32.c"
-						>
-					</File>
-					<File
-						RelativePath=".\libgit2\deps\zlib\crc32.c"
 						>
 					</File>
 					<File
