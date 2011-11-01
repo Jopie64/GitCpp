@@ -288,6 +288,24 @@ CTree::CTree(CRepo& repo, const COid& oid)
 	repo.Read(*this, oid);
 }
 
+CBlob::CBlob()
+{
+}
+
+CBlob::CBlob(CRepo& repo, const COid& oid)
+{
+	repo.Read(*this, oid);
+}
+
+const void* CBlob::Content()const
+{
+	return git_blob_rawcontent(GetInternalObj());
+}
+
+size_t CBlob::Size()const
+{
+	return git_blob_rawsize(GetInternalObj());
+}
 
 
 CTreeBuilder::CTreeBuilder()
@@ -367,6 +385,31 @@ void CTreeNode::Insert(const char* name, COid oid, int attributes)
 	CTreeNode* node = GetByPath(name);
 	node->m_oid			= oid;
 	node->m_attributes	= attributes;
+}
+
+bool CTreeNode::Delete(const char* name)
+{
+	const char* nameStart = name;
+	if(*nameStart == '/')
+		++nameStart;
+	const char* nameEnd = strchr(nameStart, '/');
+	if(nameEnd == NULL)
+		nameEnd = nameStart + strlen(nameStart);
+	if(nameEnd == nameStart)
+		//Empty name. Its this treenode.
+		return true;
+	std::string namePart = std::string(nameStart, nameEnd);
+	list_t::iterator i;
+	for(i = m_subTree.begin(); i != m_subTree.end(); ++i)
+	{
+		if(i->m_name != namePart) continue;
+		if(!i->Delete(nameEnd)) return false; //Didn't find the node.
+
+		if(*nameEnd == '\0')
+			m_subTree.erase(i);//A leaf node. We found it! Erase it.
+		return true;
+	}
+	return false;
 }
 
 int CTreeNode::GetAttributes()const
@@ -481,6 +524,14 @@ void CRepo::Read(CTree& obj, const COid& oid)
 	ThrowIfError(git_tree_lookup(&pobj, GetInternalObj(), &oid.m_oid), "git_tree_lookup()");
 	obj.Attach(pobj);
 }
+
+void CRepo::Read(CBlob& obj, const COid& oid)
+{
+	git_blob* pobj = NULL;
+	ThrowIfError(git_blob_lookup(&pobj, GetInternalObj(), &oid.m_oid), "git_blob_lookup()");
+	obj.Attach(pobj);
+}
+
 
 
 

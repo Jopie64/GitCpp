@@ -206,6 +206,15 @@ public:
 
 };
 
+class CBlob : public CObjectTempl<git_blob, &CloseWithObjectClose<git_blob> >
+{
+public:
+	CBlob();
+	CBlob(CRepo& repo, const COid& oid);
+	const void* Content()const;
+	size_t		Size()const;
+};
+
 class CTreeBuilder : public CObjectTempl<git_treebuilder, &git_treebuilder_free>
 {
 public:
@@ -230,6 +239,7 @@ public:
 
 	CTreeNode*	GetByPath(const char* name);
 	void		Insert(const char* name, COid oid, int attributes = 0100644);
+	bool		Delete(const char* name);
 
 	COid		Write(CRepo& repo);
 	int			GetAttributes()const;
@@ -268,6 +278,7 @@ public:
 
 	void			Read(CCommit& obj,		const COid& oid);
 	void			Read(CTree& obj,		const COid& oid);
+	void			Read(CBlob& obj,		const COid& oid);
 	COid			WriteBlob(const void* data, size_t size);
 	COid			WriteBlob(const std::string& data);
 	COid			Write(CTreeBuilder& tree);
