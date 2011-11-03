@@ -35,7 +35,8 @@ public:
 	void		Attach(T_GitObj* obj, bool makeOwner = true)	{ Close(); m_obj = obj; m_isOwner = makeOwner; }
 	void		Close()											{ if(!IsValid()) return; if(m_isOwner && CloseFunc) CloseFunc(m_obj); m_obj = NULL; m_isOwner = false; }
 	bool		IsValid() const									{ return m_obj != NULL; }
-	void		CheckValid() const								{ if(!IsValid()) throw std::runtime_error("libgit object not valid"); }
+	void		CheckValid() const								{ if(!IsValid()) 
+		throw std::runtime_error("libgit object not valid"); }
 	T_GitObj*	GetInternalObj() const							{ CheckValid(); return m_obj; }
 
 	typedef bool (CLibGitObjWrapper::*T_IsValidFuncPtr)() const;
@@ -191,11 +192,17 @@ public:
 
 typedef std::vector<std::tr1::shared_ptr<CCommit> > VectorCommit;
 
-class CTreeEntry : public CLibGitCopyableObjWrapper<git_tree_entry>
+class CTreeEntry : public CLibGitCopyableObjWrapper<const git_tree_entry>
 {
 public:
 	CTreeEntry();
-	CTreeEntry(git_tree_entry* entry);
+	CTreeEntry(const git_tree_entry* entry);
+
+	COid			Oid() const;
+	std::string		Name() const;
+	unsigned int	Attributes() const;
+	bool			IsFile() const;
+
 };
 
 class CTree : public CObjectTempl<git_tree, &CloseWithObjectClose<git_tree> >
@@ -203,6 +210,10 @@ class CTree : public CObjectTempl<git_tree, &CloseWithObjectClose<git_tree> >
 public:
 	CTree();
 	CTree(CRepo& repo, const COid& oid);
+
+	size_t EntryCount() const;
+	CTreeEntry Entry(size_t i);
+	CTreeEntry Entry(const char* name);
 
 };
 

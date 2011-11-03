@@ -273,9 +273,29 @@ CTreeEntry::CTreeEntry()
 {
 }
 
-CTreeEntry::CTreeEntry(git_tree_entry* entry)
+CTreeEntry::CTreeEntry(const git_tree_entry* entry)
 :	CLibGitCopyableObjWrapper(entry)
 {
+}
+
+COid CTreeEntry::Oid() const
+{
+	return *git_tree_entry_id(GetInternalObj());
+}
+
+std::string CTreeEntry::Name() const
+{
+	return git_tree_entry_name(GetInternalObj());
+}
+
+unsigned int CTreeEntry::Attributes() const
+{
+	return git_tree_entry_attributes(GetInternalObj());
+}
+
+bool CTreeEntry::IsFile() const
+{
+	return git_tree_entry_type(GetInternalObj()) == GIT_OBJ_BLOB;
 }
 
 
@@ -287,6 +307,22 @@ CTree::CTree(CRepo& repo, const COid& oid)
 {
 	repo.Read(*this, oid);
 }
+
+size_t CTree::EntryCount() const
+{
+	return git_tree_entrycount(GetInternalObj());
+}
+
+CTreeEntry CTree::Entry(size_t i)
+{
+	return git_tree_entry_byindex(GetInternalObj(), i);
+}
+
+CTreeEntry CTree::Entry(const char* name)
+{
+	return git_tree_entry_byname(GetInternalObj(), name);
+}
+
 
 CBlob::CBlob()
 {
@@ -306,6 +342,7 @@ size_t CBlob::Size()const
 {
 	return git_blob_rawsize(GetInternalObj());
 }
+
 
 
 CTreeBuilder::CTreeBuilder()
