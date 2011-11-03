@@ -212,8 +212,8 @@ public:
 	CTree(CRepo& repo, const COid& oid);
 
 	size_t EntryCount() const;
-	CTreeEntry Entry(size_t i);
-	CTreeEntry Entry(const char* name);
+	CTreeEntry Entry(size_t i) const;
+	CTreeEntry Entry(const char* name) const;
 
 };
 
@@ -310,6 +310,10 @@ public:
 
 	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents);
 	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const CTree& tree, const VectorCommit& parents);
+
+	CTreeEntry		TreeFind(const CTree& start, const char* path);
+	CTreeEntry		TreeFind(const COid& treeStart, const char* path);
+	void			BuildTreeNode(CTreeNode& node, const CTree& tree);
 private:
 	CRepo(const CRepo&); //Non copyable
 	CRepo& operator=(const CRepo&);

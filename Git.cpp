@@ -313,12 +313,12 @@ size_t CTree::EntryCount() const
 	return git_tree_entrycount(GetInternalObj());
 }
 
-CTreeEntry CTree::Entry(size_t i)
+CTreeEntry CTree::Entry(size_t i) const
 {
 	return git_tree_entry_byindex(GetInternalObj(), i);
 }
 
-CTreeEntry CTree::Entry(const char* name)
+CTreeEntry CTree::Entry(const char* name) const
 {
 	return git_tree_entry_byname(GetInternalObj(), name);
 }
@@ -700,6 +700,64 @@ COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSigna
 				 "git_commit_create()");
 	return ret;
 }
+
+CTreeEntry CRepo::TreeFind(const CTree& start, const char* path)
+{
+	const char* pathStart = path;
+	if(*pathStart == '/')
+		++pathStart;
+	const char* pathEnd = strchr(pathStart, '/');
+	if(pathEnd == NULL)
+		pathEnd = pathStart + strlen(pathStart);
+	if(pathEnd == pathStart)
+		//Empty path. Don't use it like this
+		throw std::runtime_error("TreeFind() done with invalid path name");
+
+	std::string pathPart(pathStart, pathEnd);
+	CTreeEntry entry = start.Entry(pathPart.c_str());
+
+	if(*pathEnd == '/')
+		++pathEnd;
+	if(*pathEnd == '/0')
+		return entry;
+
+	if(!entry.IsValid())
+		return entry; //Not found
+
+	if(entry.IsFile())
+		throw std::runtime_error(JStd::String::Format("Part %s of %s was a file.", pathPart.c_str(), path));
+	return TreeFind(entry.Oid(), pathEnd);
+}
+
+CTreeEntry CRepo::TreeFind(const COid& treeStart, const char* path)
+{
+	return TreeFind(CTree(*this, treeStart), path);
+}
+
+void CRepo::BuildTreeNode(CTreeNode& node, const CTree& tree)
+{
+	node.m_attributes	= 040000;
+	node.m_name			= "";
+	node.m_oid			= COid();
+
+	size_t entryCount = tree.EntryCount();
+	for(size_t i = 0; i < entryCount; ++i)
+	{
+		CTreeEntry entry = tree.Entry(i);
+		if(entry.IsFile())
+		{
+			node.Insert(entry.Name().c_str(), entry.Oid(), entry.Attributes());
+			continue;
+		}
+		CTree subTree(*this, entry.Oid());
+		node.m_subTree.push_back(CTreeNode());
+		BuildTreeNode(node.m_subTree.back(), subTree);
+		node.m_name			= entry.Name();
+		node.m_attributes	= entry.Attributes();
+		node.m_oid			= entry.Oid();
+	}
+}
+
 
 CCommitWalker::CCommitWalker()
 :	m_nextCalled(false)
