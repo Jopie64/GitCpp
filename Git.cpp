@@ -470,7 +470,7 @@ COid CTreeNode::Write(CRepo& repo)
 			continue;
 		treeB.Insert(JStd::String::ToWide(i->m_name, CP_UTF8).c_str(), oid, i->GetAttributes());
 	}
-	return repo.Write(treeB);
+	return m_oid = repo.Write(treeB);
 }
 
 
@@ -704,7 +704,7 @@ COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSigna
 CTreeEntry CRepo::TreeFind(const CTree& start, const char* path)
 {
 	const char* pathStart = path;
-	if(*pathStart == '/')
+	while(*pathStart == '/')
 		++pathStart;
 	const char* pathEnd = strchr(pathStart, '/');
 	if(pathEnd == NULL)
@@ -716,9 +716,9 @@ CTreeEntry CRepo::TreeFind(const CTree& start, const char* path)
 	std::string pathPart(pathStart, pathEnd);
 	CTreeEntry entry = start.Entry(pathPart.c_str());
 
-	if(*pathEnd == '/')
+	while(*pathEnd == '/')
 		++pathEnd;
-	if(*pathEnd == '/0')
+	if(*pathEnd == '\0')
 		return entry;
 
 	if(!entry.IsValid())
