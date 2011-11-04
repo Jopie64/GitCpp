@@ -77,6 +77,11 @@ bool COid::operator==(const COid& that) const
 	return compare(that) == 0;
 }
 
+bool COid::operator!=(const COid& that) const
+{
+	return compare(that) != 0;
+}
+
 bool COid::isNull() const
 {
 	return compare(COid()) == 0;
@@ -322,6 +327,12 @@ CTreeEntry CTree::Entry(const char* name) const
 {
 	return git_tree_entry_byname(GetInternalObj(), name);
 }
+
+COid CTree::ID() const
+{
+	return *git_tree_id(GetInternalObj());
+}
+
 
 
 CBlob::CBlob()
@@ -737,8 +748,8 @@ CTreeEntry CRepo::TreeFind(const COid& treeStart, const char* path)
 void CRepo::BuildTreeNode(CTreeNode& node, const CTree& tree)
 {
 	node.m_attributes	= 040000;
-	node.m_name			= "";
-	node.m_oid			= COid();
+//	node.m_name			= "";
+	node.m_oid			= tree.ID();
 
 	size_t entryCount = tree.EntryCount();
 	for(size_t i = 0; i < entryCount; ++i)
@@ -749,14 +760,21 @@ void CRepo::BuildTreeNode(CTreeNode& node, const CTree& tree)
 			node.Insert(entry.Name().c_str(), entry.Oid(), entry.Attributes());
 			continue;
 		}
-		CTree subTree(*this, entry.Oid());
-		node.m_subTree.push_back(CTreeNode());
-		BuildTreeNode(node.m_subTree.back(), subTree);
-		node.m_name			= entry.Name();
-		node.m_attributes	= entry.Attributes();
-		node.m_oid			= entry.Oid();
+		CTreeNode& newNode = *node.m_subTree.insert(node.m_subTree.end(), CTreeNode());
+		BuildTreeNode(newNode, entry.Oid());
+		newNode.m_name			= entry.Name();
+		newNode.m_attributes	= entry.Attributes();
+		if(newNode.m_oid != entry.Oid())
+			throw std::logic_error("Tree OID mismatch.");
+		newNode.m_oid			= entry.Oid();
 	}
 }
+
+void CRepo::BuildTreeNode(CTreeNode& node, const COid& tree)
+{
+	BuildTreeNode(node, CTree(*this, tree));
+}
+
 
 
 CCommitWalker::CCommitWalker()

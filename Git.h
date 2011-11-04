@@ -85,6 +85,7 @@ public:
 	int compare(const COid& that) const;
 	bool operator<(const COid& that) const;
 	bool operator==(const COid& that) const;
+	bool operator!=(const COid& that) const;
 
 	bool isNull() const;
 private:
@@ -211,9 +212,10 @@ public:
 	CTree();
 	CTree(CRepo& repo, const COid& oid);
 
-	size_t EntryCount() const;
-	CTreeEntry Entry(size_t i) const;
-	CTreeEntry Entry(const char* name) const;
+	size_t		EntryCount() const;
+	CTreeEntry	Entry(size_t i) const;
+	CTreeEntry	Entry(const char* name) const;
+	COid		ID() const;
 
 };
 
@@ -314,6 +316,7 @@ public:
 	CTreeEntry		TreeFind(const CTree& start, const char* path);
 	CTreeEntry		TreeFind(const COid& treeStart, const char* path);
 	void			BuildTreeNode(CTreeNode& node, const CTree& tree);
+	void			BuildTreeNode(CTreeNode& node, const COid& tree);
 private:
 	CRepo(const CRepo&); //Non copyable
 	CRepo& operator=(const CRepo&);
