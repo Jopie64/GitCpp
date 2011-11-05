@@ -58,8 +58,8 @@ public:
 	CLibGitCopyableObjWrapper(){}
 	CLibGitCopyableObjWrapper(T_GitObj* obj):CLibGitObjWrapper(obj, false){}
 
-	CLibGitCopyableObjWrapper(const CLibGitCopyableObjWrapper& obj):CLibGitObjWrapper(obj.GetInternalObj(), false){}
-	CLibGitCopyableObjWrapper& operator=(const CLibGitCopyableObjWrapper& obj){ Attach(obj.GetInternalObj(), false); return *this; }
+	CLibGitCopyableObjWrapper(const CLibGitCopyableObjWrapper& obj):CLibGitObjWrapper(obj.IsValid() ? obj.GetInternalObj() : NULL, false){}
+	CLibGitCopyableObjWrapper& operator=(const CLibGitCopyableObjWrapper& obj){ if(obj.IsValid()) Attach(obj.GetInternalObj(), false); return *this; }
 
 	void		Attach(T_GitObj* obj){ CLibGitObjWrapper::Attach(obj, false); }
 };
