@@ -250,12 +250,13 @@ public:
 	CTreeNode(const std::string& name);
 	virtual ~CTreeNode();
 
-	CTreeNode*	GetByPath(const char* name);
+	CTreeNode*	GetByPath(const char* name, bool createIfNotExist = true);
 	void		Insert(const char* name, COid oid, int attributes = 0100644);
 	bool		Delete(const char* name);
 
 	COid		Write(CRepo& repo);
 	int			GetAttributes()const;
+	bool		IsFile()const;
 
 	std::string m_name;
 	COid		m_oid;

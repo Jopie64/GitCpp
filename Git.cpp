@@ -407,7 +407,7 @@ CTreeNode::~CTreeNode()
 {
 }
 
-CTreeNode* CTreeNode::GetByPath(const char* name)
+CTreeNode* CTreeNode::GetByPath(const char* name, bool createIfNotExist)
 {
 	const char* nameStart = name;
 	if(*nameStart == '/')
@@ -424,7 +424,11 @@ CTreeNode* CTreeNode::GetByPath(const char* name)
 		if(i->m_name == namePart)
 			break;
 	if(i == m_subTree.end())
+	{
+		if(!createIfNotExist)
+			return NULL;
 		i = m_subTree.insert(m_subTree.end(), namePart);
+	}
 	return i->GetByPath(nameEnd);
 }
 
@@ -468,6 +472,12 @@ int CTreeNode::GetAttributes()const
 		return 0100644;
 	return 040000;
 }
+
+bool CTreeNode::IsFile()const
+{
+	return !m_oid.isNull() && m_subTree.empty();
+}
+
 
 COid CTreeNode::Write(CRepo& repo)
 {
