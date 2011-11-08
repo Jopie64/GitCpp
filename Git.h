@@ -64,7 +64,64 @@ public:
 	void		Attach(T_GitObj* obj){ CLibGitObjWrapper::Attach(obj, false); }
 };
 
-bool IsGitDir(const wchar_t* path);
+class CConfig : public CLibGitObjWrapper<git_config, git_config_free>
+{
+public:
+	CConfig(){}
+	void		Open(const wchar_t* file);
+	void		Open(const char* file);
+	void		OpenGlobal();
+	void		Open(CRepo& repo);
+
+	bool		BoolVal(const char* name) const;
+	std::string	StringVal(const char* name) const;
+	int			IntVal(const char* name) const;
+
+	void		BoolVal(const char* name, bool val);
+	void		StringVal(const char* name, const char* val);
+	void		IntVal(const char* name, int val);
+
+
+	template<class T>
+	struct CVal
+	{
+		CVal():m_config(NULL){}
+		void Init(CConfig* config, const char* name){ m_config=config; m_name = name; }
+	protected:
+		CConfig*	Config() const { if(!m_config) throw std::logic_error("CConfig::CVal::Config() CVal was not initialized."); return m_config; }
+		CConfig*	m_config;
+		std::string m_name;
+	};
+
+	template<>
+	struct CVal<std::string> : CVal<void>
+	{
+		const std::string& operator*()const { m_val = Config()->StringVal(m_name.c_str()); return m_val; }
+		const std::string* operator->()const{ m_val = Config()->StringVal(m_name.c_str()); return &m_val; }
+		void operator =(const std::string& val){ Config()->StringVal(m_name.c_str(), val.c_str()); }
+		void operator =(const char* val){ Config()->StringVal(m_name.c_str(), val); }
+		mutable std::string m_val;
+	};
+
+	template<>
+	struct CVal<bool> : CVal<void>
+	{
+		bool operator*()const{ return Config()->BoolVal(m_name.c_str()); }
+		void operator =(bool val){ Config()->BoolVal(m_name.c_str(), val); }
+	};
+
+	template<>
+	struct CVal<int> : CVal<void>
+	{
+		int operator*()const { return Config()->IntVal(m_name.c_str()); }
+		void operator =(int val){ Config()->IntVal(m_name.c_str(), val); }
+	};
+
+
+	template<class T>
+	CVal<T>		Val(const char* name){ CVal<T> val; val.Init(this, name); return val; }
+
+};
 
 class COid
 {
@@ -128,8 +185,13 @@ public:
 class CSignature : public CLibGitObjWrapper<git_signature, &git_signature_free>
 {
 public:
+	CSignature(){}
+	CSignature(CRepo& repo);
 	CSignature(const char* name, const char* email);
 	CSignature(const char* name, const char* email, git_time_t time, int offset);
+
+	void Create(const char* name, const char* email);
+
 };
 
 
@@ -318,6 +380,8 @@ public:
 	CTreeEntry		TreeFind(const COid& treeStart, const char* path);
 	void			BuildTreeNode(CTreeNode& node, const CTree& tree);
 	void			BuildTreeNode(CTreeNode& node, const COid& tree);
+
+	void			DefaultSig(CSignature& sig);
 private:
 	CRepo(const CRepo&); //Non copyable
 	CRepo& operator=(const CRepo&);

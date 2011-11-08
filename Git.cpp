@@ -28,13 +28,66 @@ void ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr)
 		throw CGitException(P_iGitReturnCode, P_szDoingPtr);
 }
 
-bool IsGitDir(const wchar_t* path)
+void CConfig::Open(const wchar_t* file)
 {
-//	_stat dummy;
-//	if(_wstat(JStd::String::Format(L"%s\\HEAD", path).c_str(), &dummy) != 0)
-//		return false;
+	Open(JStd::String::ToMult(file, CP_UTF8).c_str());
+}
 
-	return true;
+void CConfig::Open(const char* file)
+{
+	git_config* cfg = NULL;
+	ThrowIfError(git_config_open_ondisk(&cfg, file), "git_config_open_ondisk()");
+	Attach(cfg);	
+}
+
+void CConfig::OpenGlobal()
+{
+	git_config* cfg = NULL;
+	ThrowIfError(git_config_open_global(&cfg), "git_config_open_global()");
+	Attach(cfg);	
+}
+
+void CConfig::Open(CRepo& repo)
+{
+	Open((repo.GetPath() + "/" + "config").c_str());
+}
+
+
+
+bool CConfig::BoolVal(const char* name) const
+{
+	int val = 0;
+	ThrowIfError(git_config_get_bool(GetInternalObj(), name, &val), "git_config_get_bool()");
+	return !!val;
+}
+
+std::string CConfig::StringVal(const char* name) const
+{
+	const char* val = NULL;
+	ThrowIfError(git_config_get_string(GetInternalObj(), name, &val), "git_config_get_string()");
+	return val;
+}
+
+int CConfig::IntVal(const char* name) const
+{
+	int val = 0;
+	ThrowIfError(git_config_get_int(GetInternalObj(), name, &val), "git_config_get_int()");
+	return val;
+}
+
+void CConfig::BoolVal(const char* name, bool val)
+{
+	ThrowIfError(git_config_set_bool(GetInternalObj(), name, val ? 1 : 0), "git_config_set_bool()");
+}
+
+void CConfig::StringVal(const char* name, const char* val)
+{
+	ThrowIfError(git_config_set_string(GetInternalObj(), name, val), "git_config_set_string()");
+}
+
+void CConfig::IntVal(const char* name, int val)
+{
+	ThrowIfError(git_config_set_int(GetInternalObj(), name, val), "git_config_set_int()");
 }
 
 
@@ -165,6 +218,16 @@ CSignature::CSignature(const char* name, const char* email)
 CSignature::CSignature(const char* name, const char* email, git_time_t time, int offset)
 {
 	Attach(git_signature_new(name, email, time, offset));
+}
+
+void CSignature::Create(const char* name, const char* email)
+{
+	Attach(git_signature_now(name, email));
+}
+
+CSignature::CSignature(CRepo& repo)
+{
+	repo.DefaultSig(*this);
 }
 
 
@@ -785,6 +848,12 @@ void CRepo::BuildTreeNode(CTreeNode& node, const COid& tree)
 	BuildTreeNode(node, CTree(*this, tree));
 }
 
+void CRepo::DefaultSig(CSignature& sig)
+{
+	CConfig config;
+	config.OpenGlobal();
+	sig.Create(config.Val<std::string>("user.name")->c_str(), config.Val<std::string>("user.email")->c_str());
+}
 
 
 CCommitWalker::CCommitWalker()
