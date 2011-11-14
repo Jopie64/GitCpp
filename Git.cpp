@@ -830,10 +830,15 @@ void CRepo::BuildTreeNode(CTreeNode& node, const CTree& tree)
 		CTreeEntry entry = tree.Entry(i);
 		if(entry.IsFile())
 		{
-			node.Insert(entry.Name().c_str(), entry.Oid(), entry.Attributes());
+			//node.Insert(entry.Name().c_str(), entry.Oid(), entry.Attributes());
+			CTreeNode& newNode = *node.GetByPath(entry.Name().c_str(), true);
+			newNode.m_subTree.clear();
+			newNode.m_attributes	= entry.Attributes();
+			newNode.m_oid			= entry.Oid();
 			continue;
 		}
-		CTreeNode& newNode = *node.m_subTree.insert(node.m_subTree.end(), CTreeNode());
+		CTreeNode& newNode = *node.GetByPath(entry.Name().c_str(), true);
+		//CTreeNode& newNode = *node.m_subTree.insert(node.m_subTree.end(), CTreeNode());
 		BuildTreeNode(newNode, entry.Oid());
 		newNode.m_name			= entry.Name();
 		newNode.m_attributes	= entry.Attributes();
