@@ -2,23 +2,36 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GitCpp", "GitCpp.vcxproj", "{62312724-EDD2-4666-8418-D8244329D8FB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4} = {3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}
+	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgit2", "libgit2.vcxproj", "{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "git2", "git2.vcxproj", "{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		MinSizeRel|Win32 = MinSizeRel|Win32
 		Release|Win32 = Release|Win32
+		RelWithDebInfo|Win32 = RelWithDebInfo|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{62312724-EDD2-4666-8418-D8244329D8FB}.Debug|Win32.ActiveCfg = Debug|Win32
 		{62312724-EDD2-4666-8418-D8244329D8FB}.Debug|Win32.Build.0 = Debug|Win32
+		{62312724-EDD2-4666-8418-D8244329D8FB}.MinSizeRel|Win32.ActiveCfg = Release|Win32
+		{62312724-EDD2-4666-8418-D8244329D8FB}.MinSizeRel|Win32.Build.0 = Release|Win32
 		{62312724-EDD2-4666-8418-D8244329D8FB}.Release|Win32.ActiveCfg = Release|Win32
 		{62312724-EDD2-4666-8418-D8244329D8FB}.Release|Win32.Build.0 = Release|Win32
+		{62312724-EDD2-4666-8418-D8244329D8FB}.RelWithDebInfo|Win32.ActiveCfg = Release|Win32
+		{62312724-EDD2-4666-8418-D8244329D8FB}.RelWithDebInfo|Win32.Build.0 = Release|Win32
 		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.Debug|Win32.ActiveCfg = Debug|Win32
 		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.Debug|Win32.Build.0 = Debug|Win32
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.MinSizeRel|Win32.ActiveCfg = MinSizeRel|Win32
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.MinSizeRel|Win32.Build.0 = MinSizeRel|Win32
 		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.Release|Win32.ActiveCfg = Release|Win32
 		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.Release|Win32.Build.0 = Release|Win32
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.RelWithDebInfo|Win32.ActiveCfg = RelWithDebInfo|Win32
+		{3861D767-FBB6-43A3-AF0E-9E9E5976BEA4}.RelWithDebInfo|Win32.Build.0 = RelWithDebInfo|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
