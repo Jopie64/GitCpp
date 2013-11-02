@@ -33,6 +33,8 @@ class CLibGitObjWrapper
 public:
 	CLibGitObjWrapper():m_obj(NULL), m_isOwner(false)			{}
 	CLibGitObjWrapper(T_GitObj* obj, bool makeOwner = true):m_obj(obj), m_isOwner(makeOwner)	{}
+	CLibGitObjWrapper(CLibGitObjWrapper&& that):m_obj(NULL), m_isOwner(false) { using std::swap; swap(m_obj, that.m_obj); swap(m_isOwner, that.m_isOwner); }
+	CLibGitObjWrapper& operator=(CLibGitObjWrapper&& that) { using std::swap; swap(m_obj, that.m_obj); swap(m_isOwner, that.m_isOwner); return *this; }
 	virtual ~CLibGitObjWrapper()								{ Close(); }
 
 	void		Attach(T_GitObj* obj, bool makeOwner = true)	{ Close(); m_obj = obj; m_isOwner = makeOwner; }
@@ -180,12 +182,14 @@ public:
 	CRef(git_reference* ref):CLibGitCopyableObjWrapper(ref){}
 	CRef(const CRepo& repo, const char* name);
 
-	string Name() const ;
-	COid		Oid(bool forceResolve = false) const ;
-	bool		IsSymbolic() const;
-	void		Resolve();
+	string  Name() const ;
+	COid	Oid(bool forceResolve = false) const ;
+	bool	IsSymbolic() const;
+	void	Resolve();
 
 };
+
+typedef std::vector<CRef> RefVector;
 
 class CSignature : public CLibGitObjWrapper<git_signature, &git_signature_free>
 {
@@ -344,7 +348,7 @@ private:
 	git_odb* m_odb;
 };
 
-typedef std::tr1::function<void (const string&)> T_forEachRefCallback;
+typedef std::tr1::function<void (CRef&)> T_forEachRefCallback;
 class CRepo : public CLibGitObjWrapper<git_repository, &git_repository_free>
 {
 public:
@@ -370,7 +374,7 @@ public:
 
 	bool			IsBare()const;
 
-	void			GetReferences(StringVector& refs) const;
+	void			GetReferences(RefVector& refs) const;
 	void			ForEachRef(const T_forEachRefCallback& callback) const;
 
 	VectorCommit	ToCommits(const COids& oids);

@@ -697,12 +697,11 @@ bool CRepo::IsBare()const
 
 int addRef(git_reference* pref, void* refs)
 {
-	CRef ref(pref);
-	((StringVector*)refs)->push_back(ref.Name());
+	((RefVector*)refs)->emplace_back(pref);
 	return 0;
 }
 
-void CRepo::GetReferences(StringVector& refs) const
+void CRepo::GetReferences(RefVector& refs) const
 {
 	ThrowIfError(git_reference_foreach(GetInternalObj(), &addRef, &refs), "git_reference_foreach()");
 }
@@ -717,13 +716,15 @@ void CRepo::ForEachRef(const T_forEachRefCallback& callback) const
 		std::string					m_exception;
 		bool						m_exceptionThrown;
 
-		static int Call(git_reference* pref, void* vthis)
+	} ctxt(callback);
+
+	int error = git_reference_foreach(GetInternalObj(), [](git_reference* pref, void* vthis)
 		{
 			CCtxt* _this = (CCtxt*)vthis;
 			try
 			{
 				CRef ref(pref);
-				_this->m_callback(ref.Name());
+				_this->m_callback(ref);
 			}
 			catch(std::exception& e)
 			{
@@ -732,16 +733,13 @@ void CRepo::ForEachRef(const T_forEachRefCallback& callback) const
 				//Cannot rethrow here... it needs to fall through the c stack.
 				//Will be thrown later, but exception is always from type std::exception.
 				//It is not possible to template the catch handler to later rethrow the same exception as what was catched here.
-				return GIT_ERROR;
+				return (int)GIT_ERROR;
 			}
 			return 0;
-		}
-	} ctxt(callback);
-
-	int error = git_reference_foreach(GetInternalObj(), &CCtxt::Call, &ctxt);
+		}, &ctxt);
 	if(ctxt.m_exceptionThrown)
 		throw std::exception(ctxt.m_exception.c_str()); //rethrow exception caught from callback
-	ThrowIfError(error, "git_reference_foreach()");
+	ThrowIfError(error, "git_reference_foreach()"); //Otherwise maybe throw some other error
 }
 
 COid CRepo::WriteBlob(const void* data, size_t size)
@@ -924,6 +922,7 @@ void CCommitWalker::AddRev(const COid& oid)
 void CCommitWalker::Sort(unsigned int sort)
 {
 	git_revwalk_sorting(GetInternalObj(), sort);
+	m_nextCalled = false; //git_revwalk_sorting() resets the walker
 }
 
 void CCommitWalker::Reset()
