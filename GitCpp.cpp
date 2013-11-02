@@ -11,10 +11,10 @@
 
 using namespace std;
 
-void ShowRef(Git::CRepo& repo, const char* ref, bool doError)
+void ShowRef(Git::CRepo& repo, const string& ref, bool doError)
 {
 	//Git::CRef(repoTest, i->c_str()).Oid(true);
-	cout << "- " << ref << " --> " << Git::CRef(repo, ref).Oid(true) << endl;
+	cout << "- " << ref << " --> " << Git::CRef(repo, ref.c_str()).Oid(true) << endl;
 	if(doError)
 		throw std::runtime_error("An error. Lets stop.");
 }
@@ -24,7 +24,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	try
 	{
 		//Git::COid someCommitOid = "4d18f66bae98ec2a06d7f3c575eb5e130f6b4759";
-		Git::CRepo repoTest(Git::CRepo::DiscoverPath(L"d:/develop/wine").c_str());
+		Git::CRepo repoTest(Git::CRepo::DiscoverPath(L"P:\\MsgBridge2").c_str());
 		Git::COid someCommitOid = Git::CRef(repoTest, "HEAD").Oid(true);
 
 	cout << repoTest.GetPath() << " is " << (repoTest.IsBare() ? "" : "not ") << "bare." << endl;
@@ -32,16 +32,16 @@ int _tmain(int argc, _TCHAR* argv[])
 	cout << "References: " << endl;
 	//Method 1
 	Git::StringVector refs;
-	repoTest.GetReferences(refs, GIT_REF_LISTALL);
+	repoTest.GetReferences(refs);
 	for(Git::StringVector::iterator i = refs.begin(); i != refs.end(); ++i)
-		ShowRef(repoTest, i->c_str(), false);
+		ShowRef(repoTest, *i, false);
 
 	char c;
 	cin >> c;
 
 	//Method 2
 	cout << "Method 2... " << endl;
-	repoTest.ForEachRef(std::tr1::bind(&ShowRef, std::tr1::ref(repoTest), std::tr1::placeholders::_1, false), GIT_REF_LISTALL);
+	repoTest.ForEachRef(std::tr1::bind(&ShowRef, std::tr1::ref(repoTest), std::tr1::placeholders::_1, false));
 
 	cout << "Thats all..." << endl;
 	cin >> c;
@@ -63,7 +63,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	repoTest.Read(W_Commit, someCommitOid);
 	
 	cout << "Msg: " << W_Commit.Message() << endl;
-	cout << "ShortMsg: " << W_Commit.MessageShort() << endl;
+//	cout << "ShortMsg: " << W_Commit.MessageShort() << endl;
 	cout << "Author: " << W_Commit.Author()->name << endl;
 
 	Git::CCommitWalker W_Walk(repoTest);
@@ -74,9 +74,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		try
 		{
-			++count;Git::CCommit(repoTest, *W_Walk).MessageShort();
+			++count;Git::CCommit(repoTest, *W_Walk).Message();
 			if(count % 1000 == 1)
-				cout << "Commit " << count << ": " << Git::CCommit(repoTest, *W_Walk).MessageShort() << endl;
+				cout << "Commit " << count << ": " << Git::CCommit(repoTest, *W_Walk).Message() << endl;
 		}
 		catch(std::exception& e)
 		{

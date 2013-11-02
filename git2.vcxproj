@@ -26,25 +26,25 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>MultiByte</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
@@ -58,37 +58,31 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">bin\$(ConfigurationName)</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">bin\Int\git2.dir\$(ConfigurationName)</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">bin\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">bin\Int\git2\$(Configuration)\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">git2</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.dll</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">bin\$(ConfigurationName)</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">bin\Int\git2.dir\$(ConfigurationName)</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">bin\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">bin\Int\git2\$(Configuration)\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">git2</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.dll</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">bin\$(ConfigurationName)</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">bin\Int\git2.dir\$(ConfigurationName)</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">bin\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">bin\Int\git2\$(Configuration)\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">git2</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">.dll</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">true</GenerateManifest>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">bin\$(ConfigurationName)</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">bin\Int\git2.dir\$(ConfigurationName)</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">bin\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">bin\Int\git2\$(Configuration)\</IntDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">git2</TargetName>
-    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">.dll</TargetExt>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">false</LinkIncremental>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">true</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>libgit2/src;libgit2/include;libgit2/deps/regex;libgit2/deps/zlib;libgit2/tests-clar;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>Debug/</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <CallingConvention>StdCall</CallingConvention>
       <CompileAs>CompileAsC</CompileAs>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>
@@ -98,12 +92,11 @@
       <Optimization>Disabled</Optimization>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <StringPooling>true</StringPooling>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;GIT_WINHTTP;WIN32_SHA1;NO_VIZ;STDC;NO_GZIP;_FILE_OFFSET_BITS=64;WIN32;_WIN32_WINNT=0x0501;GIT_ARCH_32;CLAR_FIXTURE_PATH="libgit2/tests-clar/resources/";CLAR_RESOURCES="";CMAKE_INTDIR="Debug";git2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;GIT_WINHTTP;WIN32_SHA1;NO_VIZ;STDC;NO_GZIP;_FILE_OFFSET_BITS=64;WIN32;_WIN32_WINNT=0x0501;GIT_ARCH_32;CLAR_FIXTURE_PATH=\"libgit2/tests-clar/resources/\";CLAR_RESOURCES=\"\";CMAKE_INTDIR=\"Debug\";git2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -122,9 +115,7 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>libgit2VC/Debug/git2.lib</ImportLibrary>
       <LargeAddressAware>true</LargeAddressAware>
-      <ProgramDataBaseFile>libgit2VC/Debug/git2.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SubSystem>Console</SubSystem>
       <Version>0.19</Version>
@@ -136,8 +127,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>libgit2/src;libgit2/include;libgit2/deps/regex;libgit2/deps/zlib;libgit2/tests-clar;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>Release/</AssemblerListingLocation>
-      <CallingConvention>StdCall</CallingConvention>
+      <CallingConvention>Cdecl</CallingConvention>
       <CompileAs>CompileAsC</CompileAs>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -148,7 +138,7 @@
       <Optimization>MaxSpeed</Optimization>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>precompiled.h</PrecompiledHeaderFile>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <StringPooling>true</StringPooling>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <WarningLevel>Level3</WarningLevel>
@@ -156,7 +146,6 @@
       <DebugInformationFormat>
       </DebugInformationFormat>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;GIT_WINHTTP;WIN32_SHA1;NO_VIZ;STDC;NO_GZIP;_FILE_OFFSET_BITS=64;WIN32;_WIN32_WINNT=0x0501;GIT_ARCH_32;CLAR_FIXTURE_PATH="libgit2/tests-clar/resources/";CLAR_RESOURCES="";CMAKE_INTDIR="Release";git2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;GIT_WINHTTP;WIN32_SHA1;NO_VIZ;STDC;NO_GZIP;_FILE_OFFSET_BITS=64;WIN32;_WIN32_WINNT=0x0501;GIT_ARCH_32;CLAR_FIXTURE_PATH=\"libgit2/tests-clar/resources/\";CLAR_RESOURCES=\"\";CMAKE_INTDIR=\"Release\";git2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -176,25 +165,20 @@
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <ImportLibrary>libgit2VC/Release/git2.lib</ImportLibrary>
       <LargeAddressAware>true</LargeAddressAware>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <OptimizeReferences>true</OptimizeReferences>
-      <ProgramDataBaseFile>libgit2VC/Release/git2.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SetChecksum>true</SetChecksum>
       <SubSystem>Console</SubSystem>
       <Version>0.19</Version>
     </Link>
-    <ProjectReference>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
+    <ProjectReference />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>libgit2/src;libgit2/include;libgit2/deps/regex;libgit2/deps/zlib;libgit2/tests-clar;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>MinSizeRel/</AssemblerListingLocation>
-      <CallingConvention>StdCall</CallingConvention>
+      <CallingConvention>Cdecl</CallingConvention>
       <CompileAs>CompileAsC</CompileAs>
       <ExceptionHandling>
       </ExceptionHandling>
@@ -213,7 +197,6 @@
       <DebugInformationFormat>
       </DebugInformationFormat>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;GIT_WINHTTP;WIN32_SHA1;NO_VIZ;STDC;NO_GZIP;_FILE_OFFSET_BITS=64;WIN32;_WIN32_WINNT=0x0501;GIT_ARCH_32;CLAR_FIXTURE_PATH="libgit2/tests-clar/resources/";CLAR_RESOURCES="";CMAKE_INTDIR="MinSizeRel";git2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;GIT_WINHTTP;WIN32_SHA1;NO_VIZ;STDC;NO_GZIP;_FILE_OFFSET_BITS=64;WIN32;_WIN32_WINNT=0x0501;GIT_ARCH_32;CLAR_FIXTURE_PATH=\"libgit2/tests-clar/resources/\";CLAR_RESOURCES=\"\";CMAKE_INTDIR=\"MinSizeRel\";git2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -233,11 +216,9 @@
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <ImportLibrary>libgit2VC/MinSizeRel/git2.lib</ImportLibrary>
       <LargeAddressAware>true</LargeAddressAware>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <OptimizeReferences>true</OptimizeReferences>
-      <ProgramDataBaseFile>libgit2VC/MinSizeRel/git2.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SetChecksum>true</SetChecksum>
       <SubSystem>Console</SubSystem>
@@ -250,8 +231,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|Win32'">
     <ClCompile>
       <AdditionalIncludeDirectories>libgit2/src;libgit2/include;libgit2/deps/regex;libgit2/deps/zlib;libgit2/tests-clar;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AssemblerListingLocation>RelWithDebInfo/</AssemblerListingLocation>
-      <CallingConvention>StdCall</CallingConvention>
+      <CallingConvention>Cdecl</CallingConvention>
       <CompileAs>CompileAsC</CompileAs>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>
@@ -269,7 +249,6 @@
       <WarningLevel>Level3</WarningLevel>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;GIT_WINHTTP;WIN32_SHA1;NO_VIZ;STDC;NO_GZIP;_FILE_OFFSET_BITS=64;WIN32;_WIN32_WINNT=0x0501;GIT_ARCH_32;CLAR_FIXTURE_PATH="libgit2/tests-clar/resources/";CLAR_RESOURCES="";CMAKE_INTDIR="RelWithDebInfo";git2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;GIT_WINHTTP;WIN32_SHA1;NO_VIZ;STDC;NO_GZIP;_FILE_OFFSET_BITS=64;WIN32;_WIN32_WINNT=0x0501;GIT_ARCH_32;CLAR_FIXTURE_PATH=\"libgit2/tests-clar/resources/\";CLAR_RESOURCES=\"\";CMAKE_INTDIR=\"RelWithDebInfo\";git2_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -290,11 +269,9 @@
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>libgit2VC/RelWithDebInfo/git2.lib</ImportLibrary>
       <LargeAddressAware>true</LargeAddressAware>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <OptimizeReferences>true</OptimizeReferences>
-      <ProgramDataBaseFile>libgit2VC/RelWithDebInfo/git2.pdb</ProgramDataBaseFile>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <SetChecksum>true</SetChecksum>
       <SubSystem>Console</SubSystem>

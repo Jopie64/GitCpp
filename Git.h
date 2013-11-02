@@ -10,17 +10,20 @@
 
 namespace Git
 {
+using std::string;
 
 class CRepo;
 
-typedef std::vector<std::string> StringVector;
+typedef std::vector<string> StringVector;
 
 class CGitException : public std::runtime_error
 {
 public:
-	CGitException(int P_iErrorCode, const char* P_szDoingPtr);
-	int			m_iErrorCode;
-	std::string m_csDoing;
+	CGitException(int errorCode, const char* P_szDoingPtr);
+	CGitException(const char* P_szDoingPtr);
+	int m_errorCode;
+	string m_errorText;
+	string m_doing;
 };
 void ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr);
 
@@ -70,16 +73,18 @@ public:
 	CConfig(){}
 	void		Open(const wchar_t* file);
 	void		Open(const char* file);
-	void		OpenGlobal();
+	void		OpenDefault();
 	void		Open(CRepo& repo);
 
 	bool		BoolVal(const char* name) const;
-	std::string	StringVal(const char* name) const;
+	string	StringVal(const char* name) const;
 	int			IntVal(const char* name) const;
+	long long	Int64Val(const char* name) const;
 
 	void		BoolVal(const char* name, bool val);
 	void		StringVal(const char* name, const char* val);
 	void		IntVal(const char* name, int val);
+	void		Int64Val(const char* name, long long val);
 
 
 	template<class T>
@@ -90,17 +95,17 @@ public:
 	protected:
 		CConfig*	Config() const { if(!m_config) throw std::logic_error("CConfig::CVal::Config() CVal was not initialized."); return m_config; }
 		CConfig*	m_config;
-		std::string m_name;
+		string m_name;
 	};
 
 	template<>
-	struct CVal<std::string> : CVal<void>
+	struct CVal<string> : CVal<void>
 	{
-		const std::string& operator*()const { m_val = Config()->StringVal(m_name.c_str()); return m_val; }
-		const std::string* operator->()const{ m_val = Config()->StringVal(m_name.c_str()); return &m_val; }
-		void operator =(const std::string& val){ Config()->StringVal(m_name.c_str(), val.c_str()); }
+		const string& operator*()const { m_val = Config()->StringVal(m_name.c_str()); return m_val; }
+		const string* operator->()const{ m_val = Config()->StringVal(m_name.c_str()); return &m_val; }
+		void operator =(const string& val){ Config()->StringVal(m_name.c_str(), val.c_str()); }
 		void operator =(const char* val){ Config()->StringVal(m_name.c_str(), val); }
-		mutable std::string m_val;
+		mutable string m_val;
 	};
 
 	template<>
@@ -175,7 +180,7 @@ public:
 	CRef(git_reference* ref):CLibGitCopyableObjWrapper(ref){}
 	CRef(const CRepo& repo, const char* name);
 
-	std::string Name() const ;
+	string Name() const ;
 	COid		Oid(bool forceResolve = false) const ;
 	bool		IsSymbolic() const;
 	void		Resolve();
@@ -211,7 +216,7 @@ std::ostream& operator<<(std::ostream& str, const CObjType& ot);
 class CObject { public: virtual ~CObject() {} };
 
 template<class T_GitObj>
-void CloseWithObjectClose(T_GitObj* obj)	{ git_object_close((git_object*)obj); }
+void CloseWithObjectClose(T_GitObj* obj)	{ git_object_free((git_object*)obj); }
 
 template<class T_GitObj, void (*CloseFunc)(T_GitObj*) >
 class CObjectTempl : public CLibGitObjWrapper<T_GitObj, CloseFunc>, public CObject
@@ -221,7 +226,7 @@ public:
 	CObjectTempl(T_GitObj* obj):CLibGitObjWrapper(obj){}
 };
 
-class CRawObject : public CObjectTempl<git_odb_object, &git_odb_object_close>
+class CRawObject : public CObjectTempl<git_odb_object, &git_odb_object_free>
 {
 public:
 	CRawObject();
@@ -245,8 +250,8 @@ public:
 	CCommit(CRepo& repo, const COid& oid);
 	virtual ~CCommit();
 
-	std::string				Message() const;
-	std::string				MessageShort() const;
+	string				Message() const;
+//	string				MessageShort() const;
 	const git_signature*	Author() const;
 	const git_signature*	Committer() const;
 	time_t					Time() const;
@@ -262,8 +267,8 @@ public:
 	CTreeEntry(const git_tree_entry* entry);
 
 	COid			Oid() const;
-	std::string		Name() const;
-	unsigned int	Attributes() const;
+	string			Name() const;
+	git_filemode_t	FileMode() const;
 	bool			IsFile() const;
 
 };
@@ -287,7 +292,7 @@ public:
 	CBlob();
 	CBlob(CRepo& repo, const COid& oid);
 	const void* Content()const;
-	size_t		Size()const;
+	git_off_t	Size()const;
 };
 
 class CTreeBuilder : public CObjectTempl<git_treebuilder, &git_treebuilder_free>
@@ -299,7 +304,7 @@ public:
 
 	void		Reset(const CTree* source = NULL);
 	void		Clear();
-	CTreeEntry	Insert(const wchar_t* filename, const COid& id, unsigned int attributes = 0100644);
+	CTreeEntry	Insert(const wchar_t* filename, const COid& id, git_filemode_t attributes = GIT_FILEMODE_BLOB);
 };
 
 
@@ -309,21 +314,21 @@ public:
 	typedef std::list<CTreeNode> list_t;
 
 	CTreeNode();
-	CTreeNode(const std::string& name);
+	CTreeNode(const string& name);
 	virtual ~CTreeNode();
 
 	CTreeNode*	GetByPath(const char* name, bool createIfNotExist = true);
-	void		Insert(const char* name, COid oid, int attributes = 0100644);
+	void		Insert(const char* name, COid oid, git_filemode_t attributes = GIT_FILEMODE_BLOB);
 	bool		Delete(const char* name);
 
 	COid		Write(CRepo& repo);
-	int			GetAttributes()const;
+	git_filemode_t			GetAttributes()const;
 	bool		IsFile()const;
 
-	std::string m_name;
+	string m_name;
 	COid		m_oid;
 	list_t		m_subTree; //when this one is not empty, its not a leaf
-	int			m_attributes;
+	git_filemode_t	m_attributes;
 };
 
 class COdb
@@ -339,7 +344,7 @@ private:
 	git_odb* m_odb;
 };
 
-typedef std::tr1::function<void (const char*)> T_forEachRefCallback;
+typedef std::tr1::function<void (const string&)> T_forEachRefCallback;
 class CRepo : public CLibGitObjWrapper<git_repository, &git_repository_free>
 {
 public:
@@ -356,17 +361,17 @@ public:
 	void			Read(CTree& obj,		const COid& oid);
 	void			Read(CBlob& obj,		const COid& oid);
 	COid			WriteBlob(const void* data, size_t size);
-	COid			WriteBlob(const std::string& data);
+	COid			WriteBlob(const string& data);
 	COid			Write(CTreeBuilder& tree);
 
-	std::wstring	GetWPath(git_repository_pathid id = GIT_REPO_PATH) const;
-	std::string		GetPath(git_repository_pathid id = GIT_REPO_PATH) const;
+	std::wstring	GetWPath() const;
+	string		GetPath() const;
 	COdb			Odb();
 
 	bool			IsBare()const;
 
-	void			GetReferences(StringVector& refs, unsigned int flags) const;
-	void			ForEachRef(const T_forEachRefCallback& callback, unsigned int flags) const;
+	void			GetReferences(StringVector& refs) const;
+	void			ForEachRef(const T_forEachRefCallback& callback) const;
 
 	VectorCommit	ToCommits(const COids& oids);
 

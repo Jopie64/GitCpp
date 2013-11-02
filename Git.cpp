@@ -8,24 +8,33 @@
 #include <vector>
 #include <algorithm>
 
-
 #pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "git2-0.lib")
+#pragma comment(lib, "git2.lib")
 
 namespace Git
 {
 using namespace std;
 
-CGitException::CGitException(int P_iErrorCode, const char* P_szDoingPtr)
-:	m_iErrorCode(P_iErrorCode),
-	std::runtime_error(JStd::String::Format("Git error code %d received during %s. %s", P_iErrorCode, P_szDoingPtr, git_strerror(P_iErrorCode)))
+CGitException::CGitException(int errorCode, const char* P_szDoingPtr)
+:	m_errorCode(errorCode),
+	m_doing(P_szDoingPtr),
+	std::runtime_error(JStd::String::Format("Git error code %d received during %s", errorCode, P_szDoingPtr))
 {
 }
+
+CGitException::CGitException(const char* P_szDoingPtr)
+:	m_errorCode(giterr_last()->klass),
+	m_errorText(giterr_last()->message),
+	m_doing(P_szDoingPtr),
+	std::runtime_error(JStd::String::Format("Git error code %d received during %s. %s", giterr_last()->klass, P_szDoingPtr, giterr_last()->message))
+{
+}
+
 
 void ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr)
 {
 	if(P_iGitReturnCode != 0)
-		throw CGitException(P_iGitReturnCode, P_szDoingPtr);
+		throw CGitException(P_szDoingPtr); //So it will throw giterr_last()
 }
 
 void CConfig::Open(const wchar_t* file)
@@ -40,10 +49,10 @@ void CConfig::Open(const char* file)
 	Attach(cfg);	
 }
 
-void CConfig::OpenGlobal()
+void CConfig::OpenDefault()
 {
 	git_config* cfg = NULL;
-	ThrowIfError(git_config_open_global(&cfg), "git_config_open_global()");
+	ThrowIfError(git_config_open_default(&cfg), "git_config_open_default()");
 	Attach(cfg);	
 }
 
@@ -57,21 +66,28 @@ void CConfig::Open(CRepo& repo)
 bool CConfig::BoolVal(const char* name) const
 {
 	int val = 0;
-	ThrowIfError(git_config_get_bool(GetInternalObj(), name, &val), "git_config_get_bool()");
+	ThrowIfError(git_config_get_bool(&val, GetInternalObj(), name), "git_config_get_bool()");
 	return !!val;
 }
 
 std::string CConfig::StringVal(const char* name) const
 {
 	const char* val = NULL;
-	ThrowIfError(git_config_get_string(GetInternalObj(), name, &val), "git_config_get_string()");
+	ThrowIfError(git_config_get_string(&val, GetInternalObj(), name), "git_config_get_string()");
 	return val;
 }
 
 int CConfig::IntVal(const char* name) const
 {
 	int val = 0;
-	ThrowIfError(git_config_get_int(GetInternalObj(), name, &val), "git_config_get_int()");
+	ThrowIfError(git_config_get_int32(&val, GetInternalObj(), name), "git_config_get_int()");
+	return val;
+}
+
+long long CConfig::Int64Val(const char* name) const
+{
+	long long val = 0;
+	ThrowIfError(git_config_get_int64(&val, GetInternalObj(), name), "git_config_get_int()");
 	return val;
 }
 
@@ -87,7 +103,12 @@ void CConfig::StringVal(const char* name, const char* val)
 
 void CConfig::IntVal(const char* name, int val)
 {
-	ThrowIfError(git_config_set_int(GetInternalObj(), name, val), "git_config_set_int()");
+	ThrowIfError(git_config_set_int32(GetInternalObj(), name, val), "git_config_set_int()");
+}
+
+void CConfig::Int64Val(const char* name, long long val)
+{
+	ThrowIfError(git_config_set_int64(GetInternalObj(), name, val), "git_config_set_int()");
 }
 
 
@@ -182,7 +203,7 @@ COid CRef::Oid(bool forceResolve) const
 	if(forceResolve)
 		refToUse.Resolve();
 
-	const git_oid* oid = git_reference_oid(refToUse.GetInternalObj());
+	const git_oid* oid = git_reference_target(refToUse.GetInternalObj());
 	if(oid == NULL)
 		throw std::runtime_error("Reference does not point to a oid. Probably a symbolic ref.");
 	return *oid;
@@ -212,17 +233,21 @@ void CRef::Resolve()
 
 CSignature::CSignature(const char* name, const char* email)
 {
-	Attach(git_signature_now(name, email));
+	Create(name, email);
 }
 
 CSignature::CSignature(const char* name, const char* email, git_time_t time, int offset)
 {
-	Attach(git_signature_new(name, email, time, offset));
+	git_signature* out = NULL;
+	ThrowIfError(git_signature_new(&out, name, email, time, offset), "git_signature_new");
+	Attach(out);
 }
 
 void CSignature::Create(const char* name, const char* email)
 {
-	Attach(git_signature_now(name, email));
+	git_signature* out = NULL;
+	ThrowIfError(git_signature_now(&out, name, email), "git_signature_now");
+	Attach(out);
 }
 
 CSignature::CSignature(CRepo& repo)
@@ -311,10 +336,10 @@ std::string CCommit::Message() const
 	return git_commit_message(m_obj);
 }
 
-std::string CCommit::MessageShort() const
-{
-	return git_commit_message_short(m_obj);
-}
+//std::string CCommit::MessageShort() const
+//{
+//	return git_commit_message_short(m_obj);
+//}
 
 const git_signature* CCommit::Author() const
 {
@@ -333,7 +358,7 @@ time_t CCommit::Time() const
 
 COid CCommit::Tree() const
 {
-	return *git_commit_tree_oid(m_obj);
+	return *git_commit_tree_id(m_obj);
 }
 
 
@@ -356,9 +381,9 @@ std::string CTreeEntry::Name() const
 	return git_tree_entry_name(GetInternalObj());
 }
 
-unsigned int CTreeEntry::Attributes() const
+git_filemode_t CTreeEntry::FileMode() const
 {
-	return git_tree_entry_attributes(GetInternalObj());
+	return git_tree_entry_filemode(GetInternalObj());
 }
 
 bool CTreeEntry::IsFile() const
@@ -412,7 +437,7 @@ const void* CBlob::Content()const
 	return git_blob_rawcontent(GetInternalObj());
 }
 
-size_t CBlob::Size()const
+git_off_t CBlob::Size()const
 {
 	return git_blob_rawsize(GetInternalObj());
 }
@@ -446,9 +471,9 @@ void CTreeBuilder::Clear()
 	git_treebuilder_clear(GetInternalObj());
 }
 
-CTreeEntry CTreeBuilder::Insert(const wchar_t* filename, const COid& id, unsigned int attributes)
+CTreeEntry CTreeBuilder::Insert(const wchar_t* filename, const COid& id, git_filemode_t attributes)
 {
-	git_tree_entry* entry = NULL;
+	const git_tree_entry* entry = NULL;
 	ThrowIfError(git_treebuilder_insert(&entry, GetInternalObj(), JStd::String::ToMult(filename, CP_UTF8).c_str(), &id.GetInternalObj(), attributes), "git_treebuilder_insert()");
 	return CTreeEntry(entry);
 }
@@ -457,12 +482,12 @@ CTreeEntry CTreeBuilder::Insert(const wchar_t* filename, const COid& id, unsigne
 
 
 CTreeNode::CTreeNode()
-:	m_attributes(-1)
+:	m_attributes((git_filemode_t)-1)
 {
 }
 
 CTreeNode::CTreeNode(const std::string& name)
-:	m_attributes(-1), m_name(name)
+:	m_attributes((git_filemode_t)-1), m_name(name)
 {
 }
 
@@ -495,7 +520,7 @@ CTreeNode* CTreeNode::GetByPath(const char* name, bool createIfNotExist)
 	return i->GetByPath(nameEnd);
 }
 
-void CTreeNode::Insert(const char* name, COid oid, int attributes)
+void CTreeNode::Insert(const char* name, COid oid, git_filemode_t attributes)
 {
 	CTreeNode* node = GetByPath(name);
 	node->m_oid			= oid;
@@ -527,13 +552,13 @@ bool CTreeNode::Delete(const char* name)
 	return false;
 }
 
-int CTreeNode::GetAttributes()const
+git_filemode_t CTreeNode::GetAttributes()const
 {
-	if(m_attributes >= 0)
+	if(m_attributes != (git_filemode_t)-1)
 		return m_attributes;
 	if(m_subTree.empty())
-		return 0100644;
-	return 040000;
+		return GIT_FILEMODE_BLOB;
+	return GIT_FILEMODE_TREE;
 }
 
 bool CTreeNode::IsFile()const
@@ -604,14 +629,14 @@ CRepo::~CRepo()
 
 
 
-std::wstring CRepo::GetWPath(git_repository_pathid id) const
+std::wstring CRepo::GetWPath() const
 {
-	return JStd::String::ToWide(GetPath(id), CP_UTF8);
+	return JStd::String::ToWide(GetPath(), CP_UTF8);
 }
 
-std::string CRepo::GetPath(git_repository_pathid id) const
+std::string CRepo::GetPath() const
 {
-	const char* pRet = git_repository_path(GetInternalObj(), id);
+	const char* pRet = git_repository_path(GetInternalObj());
 	if(pRet == NULL)
 		throw CGitException(0, "git_repository_path()");
 	return pRet;
@@ -659,7 +684,9 @@ void CRepo::Read(CBlob& obj, const COid& oid)
 
 COdb CRepo::Odb()
 {
-	return git_repository_database(GetInternalObj());
+	git_odb* podb = NULL;
+	ThrowIfError(git_repository_odb(&podb, GetInternalObj()), "git_repository_odb()");
+	return podb;
 }
 
 bool CRepo::IsBare()const
@@ -668,18 +695,19 @@ bool CRepo::IsBare()const
 	return git_repository_is_bare(GetInternalObj()) ? true : false;
 }
 
-int addRef(const char* name, void* refs)
+int addRef(git_reference* pref, void* refs)
 {
-	((StringVector*)refs)->push_back(name);
-	return GIT_SUCCESS;
+	CRef ref(pref);
+	((StringVector*)refs)->push_back(ref.Name());
+	return 0;
 }
 
-void CRepo::GetReferences(StringVector& refs, unsigned int flags) const
+void CRepo::GetReferences(StringVector& refs) const
 {
-	ThrowIfError(git_reference_foreach(GetInternalObj(), flags, &addRef, &refs), "git_reference_foreach()");
+	ThrowIfError(git_reference_foreach(GetInternalObj(), &addRef, &refs), "git_reference_foreach()");
 }
 
-void CRepo::ForEachRef(const T_forEachRefCallback& callback, unsigned int flags) const
+void CRepo::ForEachRef(const T_forEachRefCallback& callback) const
 {
 	struct CCtxt
 	{
@@ -689,12 +717,13 @@ void CRepo::ForEachRef(const T_forEachRefCallback& callback, unsigned int flags)
 		std::string					m_exception;
 		bool						m_exceptionThrown;
 
-		static int Call(const char* ref, void* vthis)
+		static int Call(git_reference* pref, void* vthis)
 		{
 			CCtxt* _this = (CCtxt*)vthis;
 			try
 			{
-				_this->m_callback(ref);
+				CRef ref(pref);
+				_this->m_callback(ref.Name());
 			}
 			catch(std::exception& e)
 			{
@@ -705,11 +734,11 @@ void CRepo::ForEachRef(const T_forEachRefCallback& callback, unsigned int flags)
 				//It is not possible to template the catch handler to later rethrow the same exception as what was catched here.
 				return GIT_ERROR;
 			}
-			return GIT_SUCCESS;
+			return 0;
 		}
 	} ctxt(callback);
 
-	int error = git_reference_foreach(GetInternalObj(), flags, &CCtxt::Call, &ctxt);
+	int error = git_reference_foreach(GetInternalObj(), &CCtxt::Call, &ctxt);
 	if(ctxt.m_exceptionThrown)
 		throw std::exception(ctxt.m_exception.c_str()); //rethrow exception caught from callback
 	ThrowIfError(error, "git_reference_foreach()");
@@ -750,7 +779,7 @@ CRef CRepo::GetRef(const char* name) const
 CRef CRepo::MakeRef(const char* name, const COid& oid, bool force)
 {
 	git_reference* ref = NULL;
-	ThrowIfError(git_reference_create_oid(&ref, GetInternalObj(), name, &oid.GetInternalObj(), force ? 1 : 0), "git_reference_create_oid()");
+	ThrowIfError(git_reference_create(&ref, GetInternalObj(), name, &oid.GetInternalObj(), force ? 1 : 0), "git_reference_create_oid()");
 	return ref;
 }
 
@@ -777,6 +806,7 @@ COid CRepo::Commit(const char* updateRef, const CSignature& author, const CSigna
 									updateRef,
 									author.GetInternalObj(),
 									committer.GetInternalObj(),
+									"UTF-8",
 									msg,
 								    tree.GetInternalObj(),
 								    rawParents.size(),
@@ -820,7 +850,7 @@ CTreeEntry CRepo::TreeFind(const COid& treeStart, const char* path)
 
 void CRepo::BuildTreeNode(CTreeNode& node, const CTree& tree)
 {
-	node.m_attributes	= 040000;
+	node.m_attributes	= GIT_FILEMODE_TREE;
 //	node.m_name			= "";
 	node.m_oid			= tree.ID();
 
@@ -833,7 +863,7 @@ void CRepo::BuildTreeNode(CTreeNode& node, const CTree& tree)
 			//node.Insert(entry.Name().c_str(), entry.Oid(), entry.Attributes());
 			CTreeNode& newNode = *node.GetByPath(entry.Name().c_str(), true);
 			newNode.m_subTree.clear();
-			newNode.m_attributes	= entry.Attributes();
+			newNode.m_attributes	= entry.FileMode();
 			newNode.m_oid			= entry.Oid();
 			continue;
 		}
@@ -841,7 +871,7 @@ void CRepo::BuildTreeNode(CTreeNode& node, const CTree& tree)
 		//CTreeNode& newNode = *node.m_subTree.insert(node.m_subTree.end(), CTreeNode());
 		BuildTreeNode(newNode, entry.Oid());
 		newNode.m_name			= entry.Name();
-		newNode.m_attributes	= entry.Attributes();
+		newNode.m_attributes	= entry.FileMode();
 		if(newNode.m_oid != entry.Oid())
 			throw std::logic_error("Tree OID mismatch.");
 		newNode.m_oid			= entry.Oid();
@@ -856,7 +886,7 @@ void CRepo::BuildTreeNode(CTreeNode& node, const COid& tree)
 void CRepo::DefaultSig(CSignature& sig)
 {
 	CConfig config;
-	config.OpenGlobal();
+	config.OpenDefault();
 	sig.Create(config.Val<std::string>("user.name")->c_str(), config.Val<std::string>("user.email")->c_str());
 }
 
@@ -916,8 +946,8 @@ void CCommitWalker::Next()
 	int error;
 	switch(error = git_revwalk_next(&oid, GetInternalObj()))
 	{
-	case GIT_SUCCESS: m_end = false; break;
-	case GIT_EREVWALKOVER: m_end = true; break;
+	case 0: m_end = false; break;
+	case GIT_ITEROVER: m_end = true; break;
 	default:
 		ThrowIfError(error, "git_revwalk_next()");
 	}
