@@ -240,11 +240,19 @@ public:
 	const char* Data() const;
 	size_t		Size() const;
 	CObjType	Type() const;
-
-
 };
 
 std::ostream& operator<<(std::ostream& P_os, const CRawObject& P_Obj);
+
+class CObjectBase : public CObjectTempl<git_object, &git_object_free>
+{
+public:
+	CObjectBase();
+	CObjectBase(git_object* obj);
+	CObjectBase(CRepo& repo, const COid& oid, git_otype type = GIT_OBJ_ANY);
+
+	COid	Oid() const;
+};
 
 class CCommit : public CObjectTempl<git_commit, &CloseWithObjectClose<git_commit> >
 {
@@ -361,6 +369,7 @@ public:
 
 	static std::wstring	DiscoverPath(const wchar_t* startPath, bool acrossFs = false, const wchar_t* ceilingDirs = NULL);
 
+	void			Read(CObjectBase& obj,	const COid& oid, git_otype type = GIT_OBJ_ANY);
 	void			Read(CCommit& obj,		const COid& oid);
 	void			Read(CTree& obj,		const COid& oid);
 	void			Read(CBlob& obj,		const COid& oid);
@@ -384,6 +393,9 @@ public:
 
 	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents);
 	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const CTree& tree, const VectorCommit& parents);
+
+	COid			CreateTag(const char* name, const CObjectBase& target, bool force);
+	COid			CreateTag(const char* name, const COid& target, bool force);
 
 	CTreeEntry		TreeFind(const CTree& start, const char* path);
 	CTreeEntry		TreeFind(const COid& treeStart, const char* path);

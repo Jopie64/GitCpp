@@ -314,6 +314,25 @@ std::ostream& operator<<(std::ostream& str, const CObjType& ot)
 	return str << ot.AsString();
 }
 
+CObjectBase::CObjectBase()
+{
+}
+
+CObjectBase::CObjectBase(git_object* obj)
+:	CObjectTempl(obj)
+{
+}
+
+CObjectBase::CObjectBase(CRepo& repo, const COid& oid, git_otype type)
+{
+	repo.Read(*this, oid, type);
+}
+
+COid CObjectBase::Oid() const
+{
+	return *git_object_id(GetInternalObj());
+}
+
 CCommit::CCommit()
 {
 }
@@ -655,7 +674,12 @@ std::wstring CRepo::DiscoverPath(const wchar_t* startPath, bool acrossFs, const 
 }
 
 
-
+void CRepo::Read(CObjectBase& obj, const COid& oid, git_otype type)
+{
+	git_object* pobj = NULL;
+	ThrowIfError(git_object_lookup(&pobj, GetInternalObj(), &oid.m_oid, type), "git_object_lookup()");
+	obj.Attach(pobj);
+}
 
 void CRepo::Read(CCommit& obj, const COid& oid)
 {
@@ -779,6 +803,18 @@ CRef CRepo::MakeRef(const char* name, const COid& oid, bool force)
 	git_reference* ref = NULL;
 	ThrowIfError(git_reference_create(&ref, GetInternalObj(), name, &oid.GetInternalObj(), force ? 1 : 0), "git_reference_create_oid()");
 	return ref;
+}
+
+COid CRepo::CreateTag(const char* name, const CObjectBase& target, bool force)
+{
+	git_oid oid;
+	ThrowIfError(git_tag_create_lightweight(&oid, GetInternalObj(), name, target.GetInternalObj(), force ? 1 : 0), "git_tag_create_lightweight()");
+	return oid;
+}
+
+COid CRepo::CreateTag(const char* name, const COid& target, bool force)
+{
+	return CreateTag(name, CObjectBase(*this, target, GIT_OBJ_COMMIT), force);
 }
 
 
