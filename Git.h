@@ -6,7 +6,7 @@
 //#include "jstd/Sha1.h"
 #include <functional>
 #include <memory>
-#include "git2.h"
+#include "libgit2\include\git2.h"
 
 namespace Git
 {
