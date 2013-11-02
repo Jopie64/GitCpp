@@ -10,3 +10,5 @@
 Debug/
 Release/
 tests
+
+/libgit2VC
