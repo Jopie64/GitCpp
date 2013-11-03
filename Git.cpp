@@ -982,6 +982,13 @@ void CCommitWalker::AddRev(const COid& oid)
 	m_nextCalled = false; //git_revwalk_push() resets the walker
 }
 
+void CCommitWalker::Hide(const COid& oid)
+{
+	ThrowIfError(git_revwalk_hide(GetInternalObj(), &oid.GetInternalObj()), "git_revwalk_hide()");
+	m_nextCalled = false; //Documentation doesnt say whether or not git_revwalk_hide() resets the walker. So this is assumed it does
+}
+
+
 
 void CCommitWalker::Sort(unsigned int sort)
 {

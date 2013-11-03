@@ -431,6 +431,7 @@ public:
 	void Reset();
 
 	void AddRev(const COid& oid);
+	void Hide(const COid& oid);
 
 	bool End() const;
 
