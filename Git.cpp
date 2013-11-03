@@ -618,6 +618,34 @@ COid COdb::Write(const CObjType& ot, const void* data, size_t size)
 	return ret;
 }
 
+CRemote::CRemote(CRepo& repo, const char* name)
+{
+	git_remote* remote = NULL;
+	ThrowIfError(git_remote_load(&remote, repo.GetInternalObj(), name), "git_remote_load()");
+	Attach(remote);
+}
+
+void CRemote::Connect(git_direction direction)
+{
+	ThrowIfError(git_remote_connect(GetInternalObj(), direction), "git_remote_connect()");
+}
+
+bool CRemote::IsConnected() const
+{
+	return git_remote_connected(GetInternalObj()) ? true : false;
+}
+
+void CRemote::Download()
+{
+	if(!IsConnected())
+		throw std::runtime_error("Cannot fetch when not connected.");
+	ThrowIfError(git_remote_download(GetInternalObj(), [](const git_transfer_progress *stats, void *payload)
+	{
+		return 0;
+	}, NULL), "git_remote_download()");
+}
+
+
 CRepo::CRepo()
 {
 }

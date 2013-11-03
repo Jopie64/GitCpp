@@ -356,6 +356,17 @@ private:
 	git_odb* m_odb;
 };
 
+class CRemote : public CLibGitObjWrapper<git_remote, &git_remote_free>
+{
+public:
+	CRemote();
+	CRemote(CRepo& repo, const char* name);
+
+	void Connect(git_direction direction = GIT_DIRECTION_FETCH);
+	bool IsConnected() const;
+	void Download();
+};
+
 typedef std::tr1::function<void (CRef&)> T_forEachRefCallback;
 class CRepo : public CLibGitObjWrapper<git_repository, &git_repository_free>
 {
