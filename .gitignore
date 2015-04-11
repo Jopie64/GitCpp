@@ -12,3 +12,4 @@ Release/
 tests
 
 /libgit2VC
+_build
