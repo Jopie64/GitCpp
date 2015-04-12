@@ -6,7 +6,7 @@
 //#include "jstd/Sha1.h"
 #include <functional>
 #include <memory>
-#include "libgit2\include\git2.h"
+#include "git2.h"
 
 namespace Git
 {
@@ -310,13 +310,17 @@ public:
 class CTreeBuilder : public CObjectTempl<git_treebuilder, &git_treebuilder_free>
 {
 public:
-	CTreeBuilder();
-	CTreeBuilder(const CTree* source);
-	CTreeBuilder(const CTree& source);
+	CTreeBuilder(CRepo& repo);
+	CTreeBuilder(CRepo& repo, const CTree* source);
+	CTreeBuilder(CRepo& repo, const CTree& source);
 
 	void		Reset(const CTree* source = NULL);
 	void		Clear();
 	CTreeEntry	Insert(const wchar_t* filename, const COid& id, git_filemode_t attributes = GIT_FILEMODE_BLOB);
+	COid 		Write();
+
+private:
+	CRepo& m_repo;
 };
 
 
@@ -363,11 +367,14 @@ public:
 	CRemote(CRepo& repo, const char* name);
 
 	void Connect(git_direction direction = GIT_DIRECTION_FETCH);
+	void Disconnect();
 	bool IsConnected() const;
 	void Download();
+	void UpdateTips(const char* refLogMsg = NULL);
 };
 
 typedef std::tr1::function<void (CRef&)> T_forEachRefCallback;
+typedef std::tr1::function<int (CRef&)> T_forEachRefNothrowCallback;
 class CRepo : public CLibGitObjWrapper<git_repository, &git_repository_free>
 {
 public:
@@ -396,11 +403,12 @@ public:
 
 	void			GetReferences(RefVector& refs) const;
 	void			ForEachRef(const T_forEachRefCallback& callback) const;
+	int				ForEachRef_NoThrow(const T_forEachRefNothrowCallback& callback) const;
 
 	VectorCommit	ToCommits(const COids& oids);
 
 	CRef			GetRef(const char* name) const;
-	CRef			MakeRef(const char* name, const COid& oid, bool force = false);
+	CRef			MakeRef(const char* name, const COid& oid, bool force = false, const char* refLogMsg = NULL);
 
 	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const COid& tree, const COids& parents);
 	COid			Commit(const char* updateRef, const CSignature& author, const CSignature& committer, const char* msg, const CTree& tree, const VectorCommit& parents);

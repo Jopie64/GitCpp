@@ -9,11 +9,34 @@
 #include <algorithm>
 
 #pragma comment(lib, "Ws2_32.lib")
-#pragma comment(lib, "git2.lib")
 
 namespace Git
 {
 using namespace std;
+
+class CBuf
+{
+public:
+	CBuf()
+	{
+		memset(&m_buf, 0, sizeof(m_buf));
+	}
+
+	string AsString()
+	{
+		return string(m_buf.ptr, m_buf.size);
+	}
+
+	git_buf* H() { return &m_buf; }
+
+	~CBuf()
+	{
+		git_buf_free(&m_buf);
+	}
+
+private:
+	git_buf m_buf;
+};
 
 CGitException::CGitException(int errorCode, const char* P_szDoingPtr)
 :	m_errorCode(errorCode),
@@ -463,17 +486,20 @@ git_off_t CBlob::Size()const
 
 
 
-CTreeBuilder::CTreeBuilder()
+CTreeBuilder::CTreeBuilder(CRepo& repo)
+:	m_repo(repo)
 {
 	Reset();
 }
 
-CTreeBuilder::CTreeBuilder(const CTree* source)
+CTreeBuilder::CTreeBuilder(CRepo& repo, const CTree* source)
+:	m_repo(repo)
 {
 	Reset(source);
 }
 
-CTreeBuilder::CTreeBuilder(const CTree& source)
+CTreeBuilder::CTreeBuilder(CRepo& repo, const CTree& source)
+:	m_repo(repo)
 {
 	Reset(&source);
 }
@@ -481,7 +507,7 @@ CTreeBuilder::CTreeBuilder(const CTree& source)
 void CTreeBuilder::Reset(const CTree* source)
 {
 	git_treebuilder* builder = NULL;
-	ThrowIfError(git_treebuilder_create(&builder, source ? source->GetInternalObj() : NULL), "git_treebuilder_create");
+	ThrowIfError(git_treebuilder_new(&builder, m_repo.GetInternalObj(), source ? source->GetInternalObj() : NULL), "git_treebuilder_create");
 	Attach(builder);
 }
 
@@ -495,6 +521,13 @@ CTreeEntry CTreeBuilder::Insert(const wchar_t* filename, const COid& id, git_fil
 	const git_tree_entry* entry = NULL;
 	ThrowIfError(git_treebuilder_insert(&entry, GetInternalObj(), JStd::String::ToMult(filename, CP_UTF8).c_str(), &id.GetInternalObj(), attributes), "git_treebuilder_insert()");
 	return CTreeEntry(entry);
+}
+
+COid CTreeBuilder::Write()
+{
+	git_oid oid;
+	ThrowIfError(git_treebuilder_write(&oid, GetInternalObj()), "git_treebuilder_write()");
+	return oid;
 }
 
 
@@ -590,7 +623,7 @@ COid CTreeNode::Write(CRepo& repo)
 {
 	if(m_subTree.empty())
 		return m_oid;
-	CTreeBuilder treeB;
+	CTreeBuilder treeB(repo);
 	for(list_t::iterator i = m_subTree.begin(); i != m_subTree.end(); ++i)
 	{
 		COid oid = i->Write(repo);
@@ -621,13 +654,23 @@ COid COdb::Write(const CObjType& ot, const void* data, size_t size)
 CRemote::CRemote(CRepo& repo, const char* name)
 {
 	git_remote* remote = NULL;
-	ThrowIfError(git_remote_load(&remote, repo.GetInternalObj(), name), "git_remote_load()");
+	ThrowIfError(git_remote_lookup(&remote, repo.GetInternalObj(), name), "git_remote_lookup()");
 	Attach(remote);
 }
 
 void CRemote::Connect(git_direction direction)
 {
 	ThrowIfError(git_remote_connect(GetInternalObj(), direction), "git_remote_connect()");
+}
+
+void CRemote::Disconnect()
+{
+	git_remote_disconnect(GetInternalObj());
+}
+
+void CRemote::UpdateTips(const char* refLogMsg)
+{
+	ThrowIfError(git_remote_update_tips(GetInternalObj(), refLogMsg), "git_remote_update_tips()");
 }
 
 bool CRemote::IsConnected() const
@@ -639,10 +682,7 @@ void CRemote::Download()
 {
 	if(!IsConnected())
 		throw std::runtime_error("Cannot fetch when not connected.");
-	ThrowIfError(git_remote_download(GetInternalObj(), [](const git_transfer_progress *stats, void *payload)
-	{
-		return 0;
-	}, NULL), "git_remote_download()");
+	ThrowIfError(git_remote_download(GetInternalObj(), NULL), "git_remote_download()");
 }
 
 
@@ -691,14 +731,14 @@ std::string CRepo::GetPath() const
 
 std::wstring CRepo::DiscoverPath(const wchar_t* startPath, bool acrossFs, const wchar_t* ceilingDirs)
 {
-	char result[MAX_PATH];result[sizeof(result) - 1] = '\0';
+	CBuf result;
 	ThrowIfError(git_repository_discover(
-						result, sizeof(result) - 1,
+						result.H(),
 						JStd::String::ToMult(startPath, CP_UTF8).c_str(),
 						acrossFs ? 1 : 0,
 						JStd::String::ToMult(ceilingDirs == NULL ? L"" : ceilingDirs, CP_UTF8).c_str()),
 				 "git_repository_discover()");
-	return JStd::String::ToWide(result, CP_UTF8);
+	return JStd::String::ToWide(result.AsString(), CP_UTF8);
 }
 
 
@@ -758,39 +798,39 @@ void CRepo::GetReferences(RefVector& refs) const
 	ThrowIfError(git_reference_foreach(GetInternalObj(), &addRef, &refs), "git_reference_foreach()");
 }
 
+int CRepo::ForEachRef_NoThrow(const T_forEachRefNothrowCallback& callback) const
+{
+	return git_reference_foreach(GetInternalObj(), [](git_reference* pref, void* vthis)
+	{
+		CRef ref(pref);
+		return (*(const T_forEachRefNothrowCallback*)vthis)(ref);
+	}, (void*)&callback);
+}
+
 void CRepo::ForEachRef(const T_forEachRefCallback& callback) const
 {
-	struct CCtxt
+	std::string					m_exception;
+	bool						m_exceptionThrown = false;
+
+	int error = ForEachRef_NoThrow([&](CRef& ref)
 	{
-		CCtxt(const T_forEachRefCallback& callback):m_exceptionThrown(false), m_callback(callback){}
-
-		const T_forEachRefCallback&	m_callback;
-		std::string					m_exception;
-		bool						m_exceptionThrown;
-
-	} ctxt(callback);
-
-	int error = git_reference_foreach(GetInternalObj(), [](git_reference* pref, void* vthis)
+		try
 		{
-			CCtxt* _this = (CCtxt*)vthis;
-			try
-			{
-				CRef ref(pref);
-				_this->m_callback(ref);
-			}
-			catch(std::exception& e)
-			{
-				_this->m_exception = e.what();
-				_this->m_exceptionThrown = true;
-				//Cannot rethrow here... it needs to fall through the c stack.
-				//Will be thrown later, but exception is always from type std::exception.
-				//It is not possible to template the catch handler to later rethrow the same exception as what was catched here.
-				return (int)GIT_ERROR;
-			}
-			return 0;
-		}, &ctxt);
-	if(ctxt.m_exceptionThrown)
-		throw std::exception(ctxt.m_exception.c_str()); //rethrow exception caught from callback
+			callback(ref);
+		}
+		catch(std::exception& e)
+		{
+			m_exception = e.what();
+			m_exceptionThrown = true;
+			//Cannot rethrow here... it needs to fall through the c stack.
+			//Will be thrown later, but exception is always from type std::exception.
+			//It is not possible to template the catch handler to later rethrow the same exception as what was catched here.
+			return (int)GIT_ERROR;
+		}
+		return 0;
+	});
+	if(m_exceptionThrown)
+		throw std::exception(m_exception.c_str()); //rethrow exception caught from callback
 	ThrowIfError(error, "git_reference_foreach()"); //Otherwise maybe throw some other error
 }
 
@@ -806,9 +846,7 @@ COid CRepo::WriteBlob(const std::string& data)
 
 COid CRepo::Write(CTreeBuilder& tree)
 {
-	git_oid oid;
-	ThrowIfError(git_treebuilder_write(&oid, GetInternalObj(), tree.GetInternalObj()), "git_treebuilder_write()");
-	return oid;
+	return tree.Write();
 }
 
 
@@ -826,10 +864,10 @@ CRef CRepo::GetRef(const char* name) const
 	return CRef(*this, name);
 }
 
-CRef CRepo::MakeRef(const char* name, const COid& oid, bool force)
+CRef CRepo::MakeRef(const char* name, const COid& oid, bool force, const char* refLogMsg)
 {
 	git_reference* ref = NULL;
-	ThrowIfError(git_reference_create(&ref, GetInternalObj(), name, &oid.GetInternalObj(), force ? 1 : 0), "git_reference_create_oid()");
+	ThrowIfError(git_reference_create(&ref, GetInternalObj(), name, &oid.GetInternalObj(), force ? 1 : 0, refLogMsg), "git_reference_create_oid()");
 	return ref;
 }
 
