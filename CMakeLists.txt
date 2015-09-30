@@ -22,6 +22,9 @@ SET (STATIC_CRT off)
 message ("cxx Flags: " ${CMAKE_CXX_FLAGS})
 
 # Sub-directories where more CMakeLists.txt exist
+# Note: To include libgit2 library symbols in the gitcpp, see here:
+# http://stackoverflow.com/questions/11429055/cmake-how-create-a-single-shared-library-from-all-static-libraries-of-subprojec
+
 add_subdirectory(libgit2)
 add_subdirectory(JStd)
 set(LIBGIT2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libgit2/include)
@@ -38,7 +41,7 @@ source_group("src" FILES ${GITCPP_SOURCES_CPP})
 
 include_directories(. ${LIBGIT2_INCLUDE_DIR})
 
-add_library(GitCpp SHARED ${GITCPP_SOURCES_CPP}
+add_library(GitCpp STATIC ${GITCPP_SOURCES_CPP}
 						  ${GITCPP_SOURCES_H})
 
 # set (CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} libgit2\cmake)
