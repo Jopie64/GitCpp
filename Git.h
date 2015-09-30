@@ -40,7 +40,7 @@ public:
 	void		Attach(T_GitObj* obj, bool makeOwner = true)	{ Close(); m_obj = obj; m_isOwner = makeOwner; }
 	void		Close()											{ if(!IsValid()) return; if(m_isOwner && CloseFunc) CloseFunc(m_obj); m_obj = NULL; m_isOwner = false; }
 	bool		IsValid() const									{ return m_obj != NULL; }
-	void		CheckValid() const								{ if(!IsValid()) 
+	void		CheckValid() const								{ if(!IsValid())
 		throw std::runtime_error("libgit object not valid"); }
 	T_GitObj*	GetInternalObj() const							{ CheckValid(); return m_obj; }
 
@@ -371,6 +371,11 @@ public:
 	bool IsConnected() const;
 	void Download();
 	void UpdateTips(const char* refLogMsg = NULL);
+
+	std::function <void (const std::string& msg)> m_OnTransportMsg;
+
+private:
+	git_remote_callbacks m_Cb;
 };
 
 typedef std::tr1::function<void (CRef&)> T_forEachRefCallback;
@@ -466,4 +471,3 @@ private:
 
 
 }
-

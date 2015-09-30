@@ -69,14 +69,14 @@ void CConfig::Open(const char* file)
 {
 	git_config* cfg = NULL;
 	ThrowIfError(git_config_open_ondisk(&cfg, file), "git_config_open_ondisk()");
-	Attach(cfg);	
+	Attach(cfg);
 }
 
 void CConfig::OpenDefault()
 {
 	git_config* cfg = NULL;
 	ThrowIfError(git_config_open_default(&cfg), "git_config_open_default()");
-	Attach(cfg);	
+	Attach(cfg);
 }
 
 void CConfig::Open(CRepo& repo)
@@ -215,7 +215,7 @@ COids& COids::operator<<(const COid& oid)
 
 std::string CRef::Name() const
 {
-	CheckValid(); 
+	CheckValid();
 	return git_reference_name(GetInternalObj());
 }
 
@@ -651,16 +651,28 @@ COid COdb::Write(const CObjType& ot, const void* data, size_t size)
 	return ret;
 }
 
+int CRemote_git_transport_message_cb(const char *str, int len, void *payload)
+{
+	CRemote* me = (CRemote*)payload;
+	if (me->m_OnTransportMsg)
+		me->m_OnTransportMsg(string(str, len));
+	return 0;
+}
+
 CRemote::CRemote(CRepo& repo, const char* name)
 {
 	git_remote* remote = NULL;
 	ThrowIfError(git_remote_lookup(&remote, repo.GetInternalObj(), name), "git_remote_lookup()");
 	Attach(remote);
+	git_remote_callbacks initCb = GIT_REMOTE_CALLBACKS_INIT;
+	m_Cb = initCb;
+	m_Cb.payload = this;
+	m_Cb.sideband_progress = &CRemote_git_transport_message_cb;
 }
 
 void CRemote::Connect(git_direction direction)
 {
-	ThrowIfError(git_remote_connect(GetInternalObj(), direction), "git_remote_connect()");
+	ThrowIfError(git_remote_connect(GetInternalObj(), direction, &m_Cb, NULL), "git_remote_connect()");
 }
 
 void CRemote::Disconnect()
@@ -670,7 +682,7 @@ void CRemote::Disconnect()
 
 void CRemote::UpdateTips(const char* refLogMsg)
 {
-	ThrowIfError(git_remote_update_tips(GetInternalObj(), refLogMsg), "git_remote_update_tips()");
+	ThrowIfError(git_remote_update_tips(GetInternalObj(), &m_Cb, 1, GIT_REMOTE_DOWNLOAD_TAGS_UNSPECIFIED, refLogMsg), "git_remote_update_tips()");
 }
 
 bool CRemote::IsConnected() const
@@ -682,7 +694,10 @@ void CRemote::Download()
 {
 	if(!IsConnected())
 		throw std::runtime_error("Cannot fetch when not connected.");
-	ThrowIfError(git_remote_download(GetInternalObj(), NULL), "git_remote_download()");
+	git_fetch_options opts = GIT_FETCH_OPTIONS_INIT;
+	opts.callbacks = m_Cb;
+	opts.download_tags = GIT_REMOTE_DOWNLOAD_TAGS_UNSPECIFIED;
+	ThrowIfError(git_remote_download(GetInternalObj(), NULL, &opts), "git_remote_download()");
 }
 
 
@@ -1076,4 +1091,3 @@ COid CCommitWalker::Curr() const
 
 
 }
-
