@@ -672,7 +672,7 @@ CRemote::CRemote(CRepo& repo, const char* name)
 
 void CRemote::Connect(git_direction direction)
 {
-	ThrowIfError(git_remote_connect(GetInternalObj(), direction, &m_Cb, NULL), "git_remote_connect()");
+	ThrowIfError(git_remote_connect(GetInternalObj(), direction, &m_Cb), "git_remote_connect()");
 }
 
 void CRemote::Disconnect()
