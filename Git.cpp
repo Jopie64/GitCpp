@@ -14,6 +14,19 @@ namespace Git
 {
 using namespace std;
 
+class CInitialize : public JStd::CSingleton<CInitialize>
+{
+public:
+	CInitialize()
+	{
+		git_libgit2_init();
+	}
+	~CInitialize()
+	{
+		git_libgit2_shutdown();
+	}
+};
+
 class CBuf
 {
 public:
@@ -703,10 +716,12 @@ void CRemote::Download()
 
 CRepo::CRepo()
 {
+	CInitialize::I();
 }
 
 CRepo::CRepo(const wchar_t* path)
 {
+	CInitialize::I();
 	Open(path);
 }
 
