@@ -1,8 +1,10 @@
 cmake_minimum_required (VERSION 2.6)
 
-# Maps to Visual Studio solution file (Tutorial.sln)
-# The solution will have all targets (exe, lib, dll) 
-# as Visual Studio projects (.vcproj)
+if (TARGET GitCpp)
+	message("Only build GitCpp once.")
+	return()
+endif()
+
 project (GitCpp)
 
 # Turn on the ability to create folders to organize projects (.vcproj)
@@ -39,11 +41,10 @@ set(GITCPP_SOURCES_H
 source_group("include" FILES ${GITCPP_SOURCES_H})
 source_group("src" FILES ${GITCPP_SOURCES_CPP})
 
-include_directories(. ${LIBGIT2_INCLUDE_DIR})
-
 add_library(GitCpp STATIC ${GITCPP_SOURCES_CPP}
 						  ${GITCPP_SOURCES_H})
 
 # set (CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} libgit2\cmake)
 
-target_link_libraries(GitCpp ${LIBGIT2_LIBRARIES} JStd)
+target_link_libraries(GitCpp PUBLIC ${LIBGIT2_LIBRARIES} JStd)
+target_include_directories(GitCpp PUBLIC . ${LIBGIT2_INCLUDE_DIR})
