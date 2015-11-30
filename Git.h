@@ -3,7 +3,7 @@
 #include <list>
 #include <string>
 #include <iostream>
-//#include "jstd/Sha1.h"
+#include <stdexcept>
 #include <functional>
 #include <memory>
 #include "git2.h"
@@ -21,6 +21,7 @@ class CGitException : public std::runtime_error
 public:
 	CGitException(int errorCode, const char* P_szDoingPtr);
 	CGitException(const char* P_szDoingPtr);
+    virtual ~CGitException() throw() {}
 	int m_errorCode;
 	string m_errorText;
 	string m_doing;
@@ -57,24 +58,26 @@ protected:
 };
 
 template<class T_GitObj>
-class CLibGitCopyableObjWrapper : public CLibGitObjWrapper<T_GitObj, NULL>
+class CLibGitCopyableObjWrapper : public CLibGitObjWrapper<T_GitObj, nullptr>
 {
 public:
 	CLibGitCopyableObjWrapper(){}
-	CLibGitCopyableObjWrapper(T_GitObj* obj):CLibGitObjWrapper(obj, false){}
+    CLibGitCopyableObjWrapper(T_GitObj* obj):CLibGitObjWrapper<T_GitObj, nullptr>(obj, false){}
 
-	CLibGitCopyableObjWrapper(const CLibGitCopyableObjWrapper& obj):CLibGitObjWrapper(obj.IsValid() ? obj.GetInternalObj() : NULL, false){}
+    CLibGitCopyableObjWrapper(const CLibGitCopyableObjWrapper& obj):CLibGitObjWrapper<T_GitObj, nullptr>(obj.IsValid() ? obj.GetInternalObj() : NULL, false){}
 	CLibGitCopyableObjWrapper& operator=(const CLibGitCopyableObjWrapper& obj){ if(obj.IsValid()) Attach(obj.GetInternalObj(), false); return *this; }
 
-	void		Attach(T_GitObj* obj){ CLibGitObjWrapper::Attach(obj, false); }
+    void		Attach(T_GitObj* obj){ CLibGitObjWrapper<T_GitObj, nullptr>::Attach(obj, false); }
 };
 
 class CConfig : public CLibGitObjWrapper<git_config, git_config_free>
 {
 public:
 	CConfig(){}
-	void		Open(const wchar_t* file);
-	void		Open(const char* file);
+#ifdef WIN32
+    void		Open(const wchar_t* file);
+#endif
+    void		Open(const char* file);
 	void		OpenDefault();
 	void		Open(CRepo& repo);
 
@@ -100,35 +103,35 @@ public:
 		string m_name;
 	};
 
-	template<>
-	struct CVal<string> : CVal<void>
-	{
-		const string& operator*()const { m_val = Config()->StringVal(m_name.c_str()); return m_val; }
-		const string* operator->()const{ m_val = Config()->StringVal(m_name.c_str()); return &m_val; }
-		void operator =(const string& val){ Config()->StringVal(m_name.c_str(), val.c_str()); }
-		void operator =(const char* val){ Config()->StringVal(m_name.c_str(), val); }
-		mutable string m_val;
-	};
-
-	template<>
-	struct CVal<bool> : CVal<void>
-	{
-		bool operator*()const{ return Config()->BoolVal(m_name.c_str()); }
-		void operator =(bool val){ Config()->BoolVal(m_name.c_str(), val); }
-	};
-
-	template<>
-	struct CVal<int> : CVal<void>
-	{
-		int operator*()const { return Config()->IntVal(m_name.c_str()); }
-		void operator =(int val){ Config()->IntVal(m_name.c_str(), val); }
-	};
-
-
 	template<class T>
 	CVal<T>		Val(const char* name){ CVal<T> val; val.Init(this, name); return val; }
-
 };
+
+
+template<>
+struct CConfig::CVal<string> : CConfig::CVal<void>
+{
+    const string& operator*()const { m_val = Config()->StringVal(m_name.c_str()); return m_val; }
+    const string* operator->()const{ m_val = Config()->StringVal(m_name.c_str()); return &m_val; }
+    void operator =(const string& val){ Config()->StringVal(m_name.c_str(), val.c_str()); }
+    void operator =(const char* val){ Config()->StringVal(m_name.c_str(), val); }
+    mutable string m_val;
+};
+
+template<>
+struct CConfig::CVal<bool> : CConfig::CVal<void>
+{
+    bool operator*()const{ return Config()->BoolVal(m_name.c_str()); }
+    void operator =(bool val){ Config()->BoolVal(m_name.c_str(), val); }
+};
+
+template<>
+struct CConfig::CVal<int> : CConfig::CVal<void>
+{
+    int operator*()const { return Config()->IntVal(m_name.c_str()); }
+    void operator =(int val){ Config()->IntVal(m_name.c_str(), val); }
+};
+
 
 class COid
 {
@@ -227,7 +230,7 @@ class CObjectTempl : public CLibGitObjWrapper<T_GitObj, CloseFunc>, public CObje
 {
 public:
 	CObjectTempl(){}
-	CObjectTempl(T_GitObj* obj):CLibGitObjWrapper(obj){}
+    CObjectTempl(T_GitObj* obj):CLibGitObjWrapper<T_GitObj, CloseFunc>(obj){}
 };
 
 class CRawObject : public CObjectTempl<git_odb_object, &git_odb_object_free>
@@ -270,7 +273,7 @@ public:
 	COid					Tree() const;
 };
 
-typedef std::vector<std::tr1::shared_ptr<CCommit> > VectorCommit;
+typedef std::vector<std::shared_ptr<CCommit> > VectorCommit;
 
 class CTreeEntry : public CLibGitCopyableObjWrapper<const git_tree_entry>
 {
@@ -316,8 +319,11 @@ public:
 
 	void		Reset(const CTree* source = NULL);
 	void		Clear();
-	CTreeEntry	Insert(const wchar_t* filename, const COid& id, git_filemode_t attributes = GIT_FILEMODE_BLOB);
-	COid 		Write();
+    CTreeEntry	Insert(const char* filename, const COid& id, git_filemode_t attributes = GIT_FILEMODE_BLOB);
+#ifdef WIN32
+    CTreeEntry	Insert(const wchar_t* filename, const COid& id, git_filemode_t attributes = GIT_FILEMODE_BLOB);
+#endif
+    COid 		Write();
 
 private:
 	CRepo& m_repo;
@@ -373,19 +379,26 @@ public:
 	void UpdateTips(const char* refLogMsg = NULL);
 };
 
-typedef std::tr1::function<void (CRef&)> T_forEachRefCallback;
-typedef std::tr1::function<int (CRef&)> T_forEachRefNothrowCallback;
+typedef std::function<void (CRef&)> T_forEachRefCallback;
+typedef std::function<int (CRef&)> T_forEachRefNothrowCallback;
 class CRepo : public CLibGitObjWrapper<git_repository, &git_repository_free>
 {
 public:
 	CRepo();
-	CRepo(const wchar_t* path);
+    CRepo(const char* path);
 	virtual ~CRepo();
 
-	void			Open(const wchar_t* path);
-	void			Create(const wchar_t* path, bool isBare);
+    void			Open(const char* path);
+    void			Create(const char* path, bool isBare);
+    static std::string	DiscoverPath(const char* startPath, bool acrossFs = false, const char* ceilingDirs = NULL);
 
-	static std::wstring	DiscoverPath(const wchar_t* startPath, bool acrossFs = false, const wchar_t* ceilingDirs = NULL);
+#ifdef WIN32
+    CRepo(const wchar_t* path);
+    void			Open(const wchar_t* path);
+    void			Create(const wchar_t* path, bool isBare);
+    static std::wstring	DiscoverPath(const wchar_t* startPath, bool acrossFs = false, const wchar_t* ceilingDirs = NULL);
+#endif
+
 
 	void			Read(CObjectBase& obj,	const COid& oid, git_otype type = GIT_OBJ_ANY);
 	void			Read(CCommit& obj,		const COid& oid);
@@ -395,8 +408,10 @@ public:
 	COid			WriteBlob(const string& data);
 	COid			Write(CTreeBuilder& tree);
 
-	std::wstring	GetWPath() const;
-	string		GetPath() const;
+#ifdef WIN32
+    std::wstring	GetWPath() const;
+#endif
+    string          GetPath() const;
 	COdb			Odb();
 
 	bool			IsBare()const;

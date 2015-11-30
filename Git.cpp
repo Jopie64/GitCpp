@@ -1,12 +1,15 @@
 #include "stdafx.h"
 #include "Git.h"
-#include "jstd\JStd.h"
-#include "jstd\Sha1.h"
+#include "jstd/JStd.h"
+#include "jstd/Sha1.h"
 #include <fstream>
+#ifdef WIN32
 #include <windows.h>
-#include "jstd\DirIterator.h"
+#include "jstd/DirIterator.h"
+#endif
 #include <vector>
 #include <algorithm>
+#include <cstring>
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -60,10 +63,12 @@ void ThrowIfError(int P_iGitReturnCode, const char* P_szDoingPtr)
 		throw CGitException(P_szDoingPtr); //So it will throw giterr_last()
 }
 
+#ifdef WIN32
 void CConfig::Open(const wchar_t* file)
 {
 	Open(JStd::String::ToMult(file, CP_UTF8).c_str());
 }
+#endif
 
 void CConfig::Open(const char* file)
 {
@@ -109,9 +114,9 @@ int CConfig::IntVal(const char* name) const
 
 long long CConfig::Int64Val(const char* name) const
 {
-	long long val = 0;
+    int64_t val = 0;
 	ThrowIfError(git_config_get_int64(&val, GetInternalObj(), name), "git_config_get_int()");
-	return val;
+    return (long long)val;
 }
 
 void CConfig::BoolVal(const char* name, bool val)
@@ -516,12 +521,21 @@ void CTreeBuilder::Clear()
 	git_treebuilder_clear(GetInternalObj());
 }
 
-CTreeEntry CTreeBuilder::Insert(const wchar_t* filename, const COid& id, git_filemode_t attributes)
+CTreeEntry CTreeBuilder::Insert(const char* filename, const COid& id, git_filemode_t attributes)
 {
 	const git_tree_entry* entry = NULL;
-	ThrowIfError(git_treebuilder_insert(&entry, GetInternalObj(), JStd::String::ToMult(filename, CP_UTF8).c_str(), &id.GetInternalObj(), attributes), "git_treebuilder_insert()");
+    ThrowIfError(git_treebuilder_insert(&entry, GetInternalObj(), filename, &id.GetInternalObj(), attributes), "git_treebuilder_insert()");
 	return CTreeEntry(entry);
 }
+
+#ifdef WIN32
+
+CTreeEntry CTreeBuilder::Insert(const wchar_t* filename, const COid& id, git_filemode_t attributes)
+{
+    return Insert(JStd::String::ToMult(filename, CP_UTF8).c_str(), id, attributes);
+}
+
+#endif
 
 COid CTreeBuilder::Write()
 {
@@ -629,7 +643,7 @@ COid CTreeNode::Write(CRepo& repo)
 		COid oid = i->Write(repo);
 		if(oid.isNull())
 			continue;
-		treeB.Insert(JStd::String::ToWide(i->m_name, CP_UTF8).c_str(), oid, i->GetAttributes());
+        treeB.Insert(i->m_name.c_str(), oid, i->GetAttributes());
 	}
 	return m_oid = repo.Write(treeB);
 }
@@ -690,36 +704,53 @@ CRepo::CRepo()
 {
 }
 
-CRepo::CRepo(const wchar_t* path)
+CRepo::CRepo(const char* path)
 {
 	Open(path);
 }
 
+void CRepo::Open(const char* path)
+{
+    git_repository* repo = NULL;
+    ThrowIfError(git_repository_open(&repo, path), "git_repository_open()");
+    Attach(repo);
+}
+
+void CRepo::Create(const char* path, bool isBare)
+{
+    git_repository* repo = NULL;
+    ThrowIfError(git_repository_init(&repo, path, isBare ? 1 : 0), "git_repository_init()");
+    Attach(repo);
+}
+
+#ifdef WIN32
+CRepo::CRepo(const wchar_t* path)
+{
+    Open(path);
+}
+
 void CRepo::Open(const wchar_t* path)
 {
-	git_repository* repo = NULL;
-	ThrowIfError(git_repository_open(&repo, JStd::String::ToMult(path, CP_UTF8).c_str()), "git_repository_open()");
-	Attach(repo);
+    Open(JStd::String::ToMult(path, CP_UTF8).c_str());
 }
 
 void CRepo::Create(const wchar_t* path, bool isBare)
 {
-	git_repository* repo = NULL;
-	ThrowIfError(git_repository_init(&repo, JStd::String::ToMult(path, CP_UTF8).c_str(), isBare ? 1 : 0), "git_repository_init()");
-	Attach(repo);
+    Create(JStd::String::ToMult(path, CP_UTF8).c_str(), isBare);
 }
-
+#endif
 
 CRepo::~CRepo()
 {
 }
 
 
-
+#ifdef WIN32
 std::wstring CRepo::GetWPath() const
 {
 	return JStd::String::ToWide(GetPath(), CP_UTF8);
 }
+#endif
 
 std::string CRepo::GetPath() const
 {
@@ -729,18 +760,27 @@ std::string CRepo::GetPath() const
 	return pRet;
 }
 
-std::wstring CRepo::DiscoverPath(const wchar_t* startPath, bool acrossFs, const wchar_t* ceilingDirs)
+std::string CRepo::DiscoverPath(const char* startPath, bool acrossFs, const char* ceilingDirs)
 {
-	CBuf result;
-	ThrowIfError(git_repository_discover(
-						result.H(),
-						JStd::String::ToMult(startPath, CP_UTF8).c_str(),
-						acrossFs ? 1 : 0,
-						JStd::String::ToMult(ceilingDirs == NULL ? L"" : ceilingDirs, CP_UTF8).c_str()),
-				 "git_repository_discover()");
-	return JStd::String::ToWide(result.AsString(), CP_UTF8);
+    CBuf result;
+    ThrowIfError(git_repository_discover(
+                        result.H(),
+                        startPath,
+                        acrossFs ? 1 : 0,
+                        ceilingDirs == NULL ? "" : ceilingDirs),
+                 "git_repository_discover()");
+    return result.AsString();
 }
 
+#ifdef WIN32
+std::wstring CRepo::DiscoverPath(const wchar_t* startPath, bool acrossFs, const wchar_t* ceilingDirs)
+{
+    return JStd::String::ToWide(DiscoverPath(JStd::String::ToMult(startPath, CP_UTF8).c_str(),
+                        acrossFs,
+                        JStd::String::ToMult(ceilingDirs == NULL ? L"" : ceilingDirs, CP_UTF8).c_str()))
+                , CP_UTF8);
+}
+#endif
 
 void CRepo::Read(CObjectBase& obj, const COid& oid, git_otype type)
 {
@@ -830,7 +870,7 @@ void CRepo::ForEachRef(const T_forEachRefCallback& callback) const
 		return 0;
 	});
 	if(m_exceptionThrown)
-		throw std::exception(m_exception.c_str()); //rethrow exception caught from callback
+        throw std::runtime_error(m_exception.c_str()); //rethrow exception caught from callback
 	ThrowIfError(error, "git_reference_foreach()"); //Otherwise maybe throw some other error
 }
 
@@ -855,7 +895,7 @@ VectorCommit CRepo::ToCommits(const COids& oids)
 	VectorCommit ret;
 	ret.reserve(oids.m_oids.size());
 	for(COids::VectorCOid::const_iterator i = oids.m_oids.begin(); i != oids.m_oids.end(); ++i)
-		ret.push_back(std::tr1::shared_ptr<CCommit>(new CCommit(*this, *i)));
+        ret.push_back(std::shared_ptr<CCommit>(std::make_shared<CCommit>(*this, *i)));
 	return ret;
 }
 
