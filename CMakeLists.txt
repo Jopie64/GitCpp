@@ -41,3 +41,4 @@ add_library(GitCpp SHARED ${GITCPP_SOURCES_CPP}
 # set (CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} libgit2\cmake)
 
 target_link_libraries(GitCpp ${LIBGIT2_LIBRARIES} JStd)
+target_include_directories(GitCpp PUBLIC "." ${LIBGIT2_INCLUDE_DIR})

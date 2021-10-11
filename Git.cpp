@@ -674,7 +674,7 @@ CRemote::CRemote(CRepo& repo, const char* name)
 
 void CRemote::Connect(git_direction direction)
 {
-	ThrowIfError(git_remote_connect(GetInternalObj(), direction), "git_remote_connect()");
+	ThrowIfError(git_remote_connect(GetInternalObj(), direction, NULL, NULL, NULL), "git_remote_connect()");
 }
 
 void CRemote::Disconnect()
@@ -684,7 +684,7 @@ void CRemote::Disconnect()
 
 void CRemote::UpdateTips(const char* refLogMsg)
 {
-	ThrowIfError(git_remote_update_tips(GetInternalObj(), refLogMsg), "git_remote_update_tips()");
+	ThrowIfError(git_remote_update_tips(GetInternalObj(), NULL, 1, GIT_REMOTE_DOWNLOAD_TAGS_UNSPECIFIED, refLogMsg), "git_remote_update_tips()");
 }
 
 bool CRemote::IsConnected() const
@@ -696,7 +696,7 @@ void CRemote::Download()
 {
 	if(!IsConnected())
 		throw std::runtime_error("Cannot fetch when not connected.");
-	ThrowIfError(git_remote_download(GetInternalObj(), NULL), "git_remote_download()");
+	ThrowIfError(git_remote_download(GetInternalObj(), NULL, NULL), "git_remote_download()");
 }
 
 
@@ -777,7 +777,7 @@ std::wstring CRepo::DiscoverPath(const wchar_t* startPath, bool acrossFs, const 
 {
     return JStd::String::ToWide(DiscoverPath(JStd::String::ToMult(startPath, CP_UTF8).c_str(),
                         acrossFs,
-                        JStd::String::ToMult(ceilingDirs == NULL ? L"" : ceilingDirs, CP_UTF8).c_str()))
+                        JStd::String::ToMult(ceilingDirs == NULL ? L"" : ceilingDirs, CP_UTF8).c_str())
                 , CP_UTF8);
 }
 #endif
